@@ -1,0 +1,78 @@
+plugins {
+    id 'application'
+}
+
+sourceSets.main.resources.srcDirs += [ rootProject.file('assets').path ]
+
+mainClassName = 'project.roguelike.lwjgl3.Lwjgl3Launcher'
+application.setMainClass(mainClassName)
+
+eclipse.project.name = appName + '-lwjgl3'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+dependencies {
+    implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx-lwjgl3-angle:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+    implementation project(':core')
+}
+
+def os = System.properties['os.name'].toLowerCase()
+
+run {
+    workingDir = rootProject.file('assets').path
+    if (os.contains('mac')) jvmArgs += "-XstartOnFirstThread"
+}
+
+jar {
+    archiveFileName.set("${appName}-${projectVersion}.jar")
+    duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+    dependsOn configurations.runtimeClasspath
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+    dependencies {
+        exclude('META-INF/INDEX.LIST', 'META-INF/maven/**')
+    }
+    manifest {
+        attributes(
+            'Main-Class': project.mainClassName,
+            'Enable-Native-Access': 'ALL-UNNAMED'
+        )
+    }
+    doLast {
+        file(archiveFile).setExecutable(true, false)
+    }
+}
+
+tasks.register("jarWin") {
+    dependsOn("jar")
+    group("build")
+    jar.archiveFileName.set("${appName}-${projectVersion}-win.jar")
+    jar.exclude("macos/**", "linux/**", "**/*.dylib", "**/*.so",
+        'META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+}
+
+tasks.register('dist') {
+    dependsOn 'jar'
+}
+
+distributions {
+    main {
+        contents {
+            into('libs') {
+                project.configurations.runtimeClasspath.files.findAll { file ->
+                    file.getName() != project.tasks.jar.outputs.files.singleFile.name
+                }.each { file ->
+                    exclude file.name
+                }
+            }
+        }
+    }
+}
+
+startScripts.dependsOn(':lwjgl3:jar')
+startScripts.classpath = project.tasks.jar.outputs.files
