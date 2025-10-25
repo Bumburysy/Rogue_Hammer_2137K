@@ -14,7 +14,7 @@ public class RogueHammerGame extends ApplicationAdapter {
     @Override
     public void create() {
         batch = new SpriteBatch();
-        player = new Player();
+        player = new Player(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f);
     }
 
     @Override
