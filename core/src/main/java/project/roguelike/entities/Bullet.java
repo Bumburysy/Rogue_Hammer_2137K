@@ -16,7 +16,7 @@ public class Bullet {
 
     private Vector2 position;
     private Vector2 velocity;
-    private float speed = 600f;
+    private float speed = 400f;
     private Rectangle bounds;
 
     public Bullet(float x, float y, Vector2 direction) {
@@ -35,7 +35,7 @@ public class Bullet {
             currentTexture = textureDown;
 
         position = new Vector2(x, y);
-        velocity = direction.nor().scl(speed);
+        velocity = new Vector2(direction).nor().scl(speed);
         bounds = new Rectangle(x, y, currentTexture.getWidth(), currentTexture.getHeight());
     }
 
