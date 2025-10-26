@@ -21,10 +21,11 @@ public class Player {
 
     private Vector2 position;
     private float speed = 300f;
+    private int health = 20;
     private Rectangle bounds;
 
     private List<Bullet> bullets;
-    private float shootCooldown = 0.2f;
+    private float shootCooldown = 0.4f;
     private float timeSinceLastShot = 0;
     private Vector2 lastShootDir = null;
 
@@ -124,4 +125,17 @@ public class Player {
     public List<Bullet> getBullets() {
         return bullets;
     }
+
+    public Vector2 getPosition() {
+        return position;
+    }
+
+    public void takeDamage(int amount) {
+        health -= amount;
+        System.out.println("Player HP: " + health);
+        if (health <= 0) {
+            System.out.println("Player dead!");
+        }
+    }
+
 }
