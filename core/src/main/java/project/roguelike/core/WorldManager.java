@@ -9,12 +9,18 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.graphics.Cursor.SystemCursor;
 import project.roguelike.entities.Player;
+import project.roguelike.items.Pistol;
+import project.roguelike.items.Rifle;
+import project.roguelike.items.Shotgun;
+import project.roguelike.items.Smg;
+import project.roguelike.items.Sniper;
 import project.roguelike.levels.LevelGenerator;
 import project.roguelike.levels.RoomData;
 import java.util.*;
 import project.roguelike.rooms.*;
 
 public class WorldManager {
+    private InputManager inputManager;
     private RoomData[][] layout;
     private List<Room> rooms;
     private Player player;
@@ -31,6 +37,8 @@ public class WorldManager {
     }
 
     public void create() {
+        inputManager = new InputManager(this);
+        Gdx.input.setInputProcessor(inputManager);
         LevelGenerator generator = new LevelGenerator();
         rooms = generator.generateLevel(layout);
         camera = new OrthographicCamera();
@@ -70,6 +78,15 @@ public class WorldManager {
         Vector2 spawn = currentRoom.getCenter();
         player = new Player(spawn.x, spawn.y, playerSize, playerSize);
         updateCameraToCurrentRoom(true);
+        player.addActiveItem(new Pistol());
+        player.addActiveItem(new Smg());
+        player.addActiveItem(new Shotgun());
+        player.addActiveItem(new Rifle());
+        player.addActiveItem(new Sniper());
+    }
+
+    public void handleScroll(int amount) {
+        player.switchActive(-amount);
     }
 
     public void update(float delta) {
@@ -92,8 +109,13 @@ public class WorldManager {
         for (Room r : rooms) {
             r.dispose();
         }
-        if (crosshair != null) crosshair.dispose();
-        try { Gdx.graphics.setSystemCursor(SystemCursor.Arrow); } catch (Exception ignored) {}
+        if (crosshair != null) {
+            crosshair.dispose();
+        }
+        try {
+            Gdx.graphics.setSystemCursor(SystemCursor.Arrow);
+        } catch (Exception ignored) {
+        }
     }
 
     private Room getRoomAt(int row, int col) {
