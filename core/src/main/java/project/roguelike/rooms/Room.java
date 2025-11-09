@@ -186,14 +186,14 @@ public class Room {
                 wallThickness);
         batch.draw(wallLeftRegion,
                 position.x - wallThickness / 2,
-                position.y,
+                position.y - wallThickness,
                 wallThickness / 2,
-                roomHeight);
+                roomHeight + wallThickness * 2);
         batch.draw(wallRightRegion,
                 position.x + roomWidth,
-                position.y,
+                position.y - wallThickness,
                 wallThickness / 2,
-                roomHeight);
+                roomHeight + wallThickness * 2);
         for (DoorDirection door : doors) {
             switch (door) {
                 case UP: {
