@@ -1,15 +1,15 @@
 package project.roguelike.levels;
 
 import project.roguelike.rooms.Room.RoomShape;
-import project.roguelike.rooms.Room.RoomType;
-import project.roguelike.rooms.RoomData;
+import project.roguelike.levels.RoomData.RoomType;
 
 public class Layout1 {
 
   public static final RoomData[][] layout = {
-      { null, new RoomData(RoomType.NORMAL, RoomShape.I_SHAPE_V), null },
-      { new RoomData(RoomType.NORMAL, RoomShape.I_SHAPE_H), new RoomData(RoomType.NORMAL, RoomShape.O_SHAPE),
-          new RoomData(RoomType.NORMAL, RoomShape.I_SHAPE_H) },
-      { null, new RoomData(RoomType.NORMAL, RoomShape.I_SHAPE_V), null }
+      { null, new RoomData(RoomType.START, RoomShape.D_SHAPE_S), null },
+      { new RoomData(RoomType.NORMAL, RoomShape.L_SHAPE_E), new RoomData(RoomType.NORMAL, RoomShape.T_SHAPE_N),
+          new RoomData(RoomType.NORMAL, RoomShape.L_SHAPE_S) },
+      { new RoomData(RoomType.NORMAL, RoomShape.L_SHAPE_N), new RoomData(RoomType.NORMAL, RoomShape.I_SHAPE_E),
+          new RoomData(RoomType.NORMAL, RoomShape.L_SHAPE_W) }
   };
 };
