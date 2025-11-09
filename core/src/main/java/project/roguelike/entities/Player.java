@@ -4,102 +4,115 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-
+import com.badlogic.gdx.utils.viewport.Viewport;
+import project.roguelike.core.GameConfig;
+import project.roguelike.rooms.Room;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class Player {
-
-    private Texture textureUp;
-    private Texture textureDown;
-    private Texture textureLeft;
-    private Texture textureRight;
-    private Texture currentTexture;
-
+    private Texture spriteSheet;
+    private TextureRegion[] frames;
+    private TextureRegion[] framesFlipped;
+    private final Vector2 tmpMouse = new Vector2();
+    private float frameDuration = 0.08f;
+    private float stateTime = 0f;
+    private boolean facingLeft = false;
     private Vector2 position;
-    private float speed = 300f;
+    private float speed = 400f;
     private int health = 20;
     private Rectangle bounds;
-
     private List<Bullet> bullets;
-    private float shootCooldown = 0.4f;
+    private float shootCooldown = 0.2f;
     private float timeSinceLastShot = 0;
-    private Vector2 lastShootDir = null;
 
-    public Player(float x, float y) {
-        textureUp = new Texture("textures/player_up.png");
-        textureDown = new Texture("textures/player_down.png");
-        textureLeft = new Texture("textures/player_left.png");
-        textureRight = new Texture("textures/player_right.png");
-        currentTexture = textureDown;
-
+    public Player(float x, float y, float width, float height) {
+        spriteSheet = new Texture("textures/player_spritesheet.png");
+        TextureRegion[][] tmp = TextureRegion.split(spriteSheet, 32, 32);
+        int frameCount = tmp[0].length;
+        frames = new TextureRegion[frameCount];
+        framesFlipped = new TextureRegion[frameCount];
+        for (int i = 0; i < frameCount; i++) {
+            frames[i] = tmp[0][i];
+            framesFlipped[i] = new TextureRegion(frames[i]);
+            framesFlipped[i].flip(true, false);
+        }
         position = new Vector2(x, y);
-        bounds = new Rectangle(x, y, currentTexture.getWidth(), currentTexture.getHeight());
-
+        bounds = new Rectangle(x - width / 2f, y - height / 2f, width, height);
         bullets = new ArrayList<>();
     }
 
     private Vector2 getInputDirection(int up, int down, int left, int right) {
         Vector2 dir = new Vector2(0, 0);
-        if (Gdx.input.isKeyPressed(up))
+        if (Gdx.input.isKeyPressed(up)) {
             dir.y += 1;
-        if (Gdx.input.isKeyPressed(down))
+        }
+        if (Gdx.input.isKeyPressed(down)) {
             dir.y -= 1;
-        if (Gdx.input.isKeyPressed(left))
+        }
+        if (Gdx.input.isKeyPressed(left)) {
             dir.x -= 1;
-        if (Gdx.input.isKeyPressed(right))
+        }
+        if (Gdx.input.isKeyPressed(right)) {
             dir.x += 1;
+        }
         return dir.isZero() ? null : dir.nor();
     }
 
-    public void update(float delta) {
+    public void update(float delta, Room currentRoom, Viewport viewport) {
         timeSinceLastShot += delta;
-
         Vector2 moveDir = getInputDirection(Input.Keys.W, Input.Keys.S, Input.Keys.A, Input.Keys.D);
-        if (moveDir != null)
+
+        if (moveDir != null) {
             position.add(moveDir.scl(speed * delta));
-
-        position.x = Math.max(0, Math.min(Gdx.graphics.getWidth() - currentTexture.getWidth(), position.x));
-        position.y = Math.max(0, Math.min(Gdx.graphics.getHeight() - currentTexture.getHeight(), position.y));
-        bounds.setPosition(position);
-
-        Vector2 shootDir = getInputDirection(Input.Keys.UP, Input.Keys.DOWN, Input.Keys.LEFT, Input.Keys.RIGHT);
-        if (shootDir != null && timeSinceLastShot >= shootCooldown) {
-            float bulletX = position.x;
-            float bulletY = position.y;
-            bullets.add(new Bullet(bulletX, bulletY, shootDir));
-            lastShootDir = shootDir;
-            timeSinceLastShot = 0;
         }
 
-        if (lastShootDir != null && shootDir != null) {
-            currentTexture = getTextureForDirection(lastShootDir);
-        } else if (moveDir != null) {
-            currentTexture = getTextureForDirection(moveDir);
+        float minX = currentRoom.getPosition().x + bounds.height / 2;
+        float maxX = currentRoom.getPosition().x + GameConfig.ROOM_WIDTH - bounds.height / 2;
+        float minY = currentRoom.getPosition().y + bounds.height / 2;
+        float maxY = currentRoom.getPosition().y + GameConfig.ROOM_HEIGHT - bounds.height / 2;
+        position.x = Math.max(minX, Math.min(maxX, position.x));
+        position.y = Math.max(minY, Math.min(maxY, position.y));
+        bounds.setPosition(position.x - bounds.width / 2f, position.y - bounds.height / 2f);
+        tmpMouse.set(Gdx.input.getX(), Gdx.input.getY());
+        viewport.unproject(tmpMouse);
+        Vector2 shootDir = tmpMouse.cpy().sub(position).nor();
+
+        if (tmpMouse.x < position.x) {
+            facingLeft = true;
+        } else if (tmpMouse.x > position.x) {
+            facingLeft = false;
+        }
+
+        stateTime += delta;
+
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && timeSinceLastShot >= shootCooldown) {
+            float bulletSize = GameConfig.BULLET_SIZE;
+            float bulletX = position.x - bulletSize / 2f;
+            float bulletY = position.y - bulletSize / 2f;
+            bullets.add(new Bullet(bulletX, bulletY, shootDir));
+            timeSinceLastShot = 0;
         }
 
         Iterator<Bullet> iter = bullets.iterator();
         while (iter.hasNext()) {
-            Bullet b = iter.next();
-            b.update(delta);
-            if (b.isOffScreen())
-                iter.remove();
-        }
-    }
+            Bullet bullet = iter.next();
+            bullet.update(delta);
+            Vector2 bulletPos = bullet.getPosition();
+            Vector2 roomPos = currentRoom.getPosition();
 
-    private Texture getTextureForDirection(Vector2 dir) {
-        if (dir.y > 0)
-            return textureUp;
-        if (dir.y < 0)
-            return textureDown;
-        if (dir.x < 0)
-            return textureLeft;
-        if (dir.x > 0)
-            return textureRight;
-        return currentTexture;
+            if (bulletPos.x < roomPos.x ||
+                    bulletPos.x > roomPos.x + GameConfig.ROOM_WIDTH ||
+                    bulletPos.y < roomPos.y ||
+                    bulletPos.y > roomPos.y + GameConfig.ROOM_HEIGHT) {
+                bullet.dispose();
+                iter.remove();
+            }
+        }
     }
 
     public Rectangle getBounds() {
@@ -107,19 +120,24 @@ public class Player {
     }
 
     public void render(SpriteBatch batch) {
-        batch.draw(currentTexture, position.x, position.y);
-        for (Bullet b : bullets) {
-            b.render(batch);
+        int idx = (int) (stateTime / frameDuration) % frames.length;
+        TextureRegion region = facingLeft ? framesFlipped[idx] : frames[idx];
+        batch.draw(region,
+                position.x - bounds.width / 2f,
+                position.y - bounds.height / 2f,
+                bounds.width,
+                bounds.height);
+        for (Bullet bullet : bullets) {
+            bullet.render(batch);
         }
     }
 
     public void dispose() {
-        textureUp.dispose();
-        textureDown.dispose();
-        textureLeft.dispose();
-        textureRight.dispose();
-        for (Bullet b : bullets)
+        if (spriteSheet != null)
+            spriteSheet.dispose();
+        for (Bullet b : bullets) {
             b.dispose();
+        }
     }
 
     public List<Bullet> getBullets() {
@@ -133,9 +151,14 @@ public class Player {
     public void takeDamage(int amount) {
         health -= amount;
         System.out.println("Player HP: " + health);
-        if (health <= 0) {
-            System.out.println("Player dead!");
-        }
+    }
+
+    public void heal(int amount) {
+        health += amount;
+    }
+
+    public int getHealth() {
+        return health;
     }
 
 }
