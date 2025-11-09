@@ -17,6 +17,10 @@ public class GameConfig {
 
     public static final float ROOM_SPACING = WALL_THICKNESS * 2f;
 
-    public static final float WORLD_WIDTH = ROOM_TOTAL_WIDTH;
     public static final float WORLD_HEIGHT = ROOM_TOTAL_HEIGHT + TOP_MARGIN;
+    public static final float WORLD_WIDTH = WORLD_HEIGHT * 16f / 9f;
+
+    public static final float WEAPON_WIDTH_RATIO = 0.4f;
+    public static final float OFFSET_X_RATIO = 0.33f;
+    public static final float OFFSET_Y_RATIO = -0.33f;
 }
