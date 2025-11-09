@@ -9,6 +9,13 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import project.roguelike.core.GameConfig;
+import project.roguelike.items.ActiveItem;
+import project.roguelike.items.HalfHeart;
+import project.roguelike.items.Heart;
+import project.roguelike.items.Item;
+import project.roguelike.items.Medkit;
+import project.roguelike.items.PassiveItem;
+import project.roguelike.items.Weapon;
 import project.roguelike.rooms.Room;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -19,16 +26,22 @@ public class Player {
     private TextureRegion[] frames;
     private TextureRegion[] framesFlipped;
     private final Vector2 tmpMouse = new Vector2();
+    private final Vector2 tmpShootDir = new Vector2();
     private float frameDuration = 0.08f;
     private float stateTime = 0f;
     private boolean facingLeft = false;
     private Vector2 position;
-    private float speed = 400f;
-    private int health = 20;
+    private float baseSpeed = 400f;
+    private float currentSpeed = baseSpeed;
+    private int maxHealth = 10;
+    private int currentHealth = maxHealth;
     private Rectangle bounds;
+    private int baseMaxHealth = 10;
+    private final List<PassiveItem> passiveItems = new ArrayList<>();
+    private final List<ActiveItem> activeItems = new ArrayList<>();
+    private int activeIndex = -1;
     private List<Bullet> bullets;
-    private float shootCooldown = 0.2f;
-    private float timeSinceLastShot = 0;
+    private float cooldownMultiplier = 1f;
 
     public Player(float x, float y, float width, float height) {
         spriteSheet = new Texture("textures/player_spritesheet.png");
@@ -64,11 +77,12 @@ public class Player {
     }
 
     public void update(float delta, Room currentRoom, Viewport viewport) {
-        timeSinceLastShot += delta;
+        stateTime += delta;
+
         Vector2 moveDir = getInputDirection(Input.Keys.W, Input.Keys.S, Input.Keys.A, Input.Keys.D);
 
         if (moveDir != null) {
-            position.add(moveDir.scl(speed * delta));
+            position.add(moveDir.scl(currentSpeed * delta));
         }
 
         float minX = currentRoom.getPosition().x + bounds.height / 2;
@@ -80,7 +94,7 @@ public class Player {
         bounds.setPosition(position.x - bounds.width / 2f, position.y - bounds.height / 2f);
         tmpMouse.set(Gdx.input.getX(), Gdx.input.getY());
         viewport.unproject(tmpMouse);
-        Vector2 shootDir = tmpMouse.cpy().sub(position).nor();
+        tmpShootDir.set(tmpMouse).sub(position).nor();
 
         if (tmpMouse.x < position.x) {
             facingLeft = true;
@@ -88,14 +102,27 @@ public class Player {
             facingLeft = false;
         }
 
-        stateTime += delta;
+        ActiveItem equipped = getEquippedActive();
+        if (equipped instanceof Weapon) {
+            Weapon weapon = (Weapon) equipped;
+            weapon.update(delta);
 
-        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && timeSinceLastShot >= shootCooldown) {
-            float bulletSize = GameConfig.BULLET_SIZE;
-            float bulletX = position.x - bulletSize / 2f;
-            float bulletY = position.y - bulletSize / 2f;
-            bullets.add(new Bullet(bulletX, bulletY, shootDir));
-            timeSinceLastShot = 0;
+            float angle = (float) Math.toDegrees(Math.atan2(tmpMouse.y - position.y, tmpMouse.x - position.x));
+
+            if (((weapon.isAutomatic() && Gdx.input.isButtonPressed(Input.Buttons.LEFT)) ||
+                    (!weapon.isAutomatic() && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)))) {
+
+                if (weapon.canShoot()) {
+                    Vector2 muzzlePos = weapon.getMuzzlePosition(position, angle, facingLeft,
+                            bounds.width, bounds.height);
+                    weapon.shoot();
+                    bullets.add(new Bullet(muzzlePos.x, muzzlePos.y, tmpShootDir));
+                }
+            }
+
+            if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+                weapon.startReload();
+            }
         }
 
         Iterator<Bullet> iter = bullets.iterator();
@@ -127,9 +154,19 @@ public class Player {
                 position.y - bounds.height / 2f,
                 bounds.width,
                 bounds.height);
+
+        ActiveItem equipped = getEquippedActive();
+        if (equipped instanceof Weapon) {
+            float angle = (float) Math.toDegrees(Math.atan2(
+                    tmpMouse.y - position.y,
+                    tmpMouse.x - position.x));
+            ((Weapon) equipped).render(batch, position, angle, facingLeft, bounds.width, bounds.height);
+        }
+
         for (Bullet bullet : bullets) {
             bullet.render(batch);
         }
+
     }
 
     public void dispose() {
@@ -137,6 +174,11 @@ public class Player {
             spriteSheet.dispose();
         for (Bullet b : bullets) {
             b.dispose();
+        }
+        for (ActiveItem item : activeItems) {
+            if (item instanceof Weapon) {
+                ((Weapon) item).dispose();
+            }
         }
     }
 
@@ -149,16 +191,108 @@ public class Player {
     }
 
     public void takeDamage(int amount) {
-        health -= amount;
-        System.out.println("Player HP: " + health);
+        currentHealth -= amount;
+        System.out.println("Player HP: " + currentHealth);
     }
 
     public void heal(int amount) {
-        health += amount;
+        currentHealth += amount;
+        if (currentHealth > maxHealth) {
+            currentHealth = maxHealth;
+        }
+        System.out.println("Healed " + amount + " HP. Current HP: " + currentHealth);
     }
 
     public int getHealth() {
-        return health;
+        return currentHealth;
     }
 
+    public void pickUpItem(Item item) {
+        if (item == null)
+            return;
+        switch (item.getType()) {
+            case CONSUMABLE:
+                if (item instanceof Heart)
+                    heal(((Heart) item).getHealAmmount());
+                else if (item instanceof HalfHeart)
+                    heal(((HalfHeart) item).getHealAmmount());
+                else if (item instanceof Medkit)
+                    heal(((Medkit) item).getHealAmmount());
+                break;
+            case PASSIVE:
+                if (item instanceof PassiveItem) {
+                    addPassiveItem((PassiveItem) item);
+                }
+                break;
+            case ACTIVE:
+                if (item instanceof ActiveItem) {
+                    addActiveItem((ActiveItem) item);
+                }
+                break;
+        }
+    }
+
+    public void addPassiveItem(PassiveItem item) {
+        if (item == null) {
+            return;
+        }
+        passiveItems.add(item);
+        recomputeStatsFromPassives();
+    }
+
+    public void addActiveItem(ActiveItem item) {
+        if (item == null) {
+            return;
+        }
+        activeItems.add(item);
+        if (activeIndex < 0) {
+            activeIndex = 0;
+        }
+        if (item instanceof Weapon) {
+            ((Weapon) item).updateCooldownMultiplier(cooldownMultiplier);
+        }
+    }
+
+    public void switchActive(int dir) {
+        if (activeItems.isEmpty()) {
+            activeIndex = -1;
+            return;
+        }
+        activeIndex = (activeIndex + dir) % activeItems.size();
+        if (activeIndex < 0) {
+            activeIndex += activeItems.size();
+        }
+        System.out.println("Equipped: " + activeItems.get(activeIndex).getName());
+    }
+
+    public ActiveItem getEquippedActive() {
+        if (activeIndex >= 0 && activeIndex < activeItems.size())
+            return activeItems.get(activeIndex);
+        return null;
+    }
+
+    private void recomputeStatsFromPassives() {
+        float speedMul = 1f;
+        float cdMul = 1f;
+        int hpBonus = 0;
+        for (PassiveItem p : passiveItems) {
+            speedMul *= p.getSpeedMultiplier();
+            cdMul *= p.getShootCooldownMultiplier();
+            hpBonus += p.getMaxHpBonus();
+        }
+
+        this.currentSpeed = baseSpeed * speedMul;
+        this.cooldownMultiplier = cdMul;
+        int prevMax = this.maxHealth;
+        this.maxHealth = baseMaxHealth + hpBonus;
+        int delta = this.maxHealth - prevMax;
+        if (delta > 0) {
+            this.currentHealth = Math.min(this.currentHealth + delta, this.maxHealth);
+        }
+
+        ActiveItem equipped = getEquippedActive();
+        if (equipped instanceof Weapon) {
+            ((Weapon) equipped).updateCooldownMultiplier(cooldownMultiplier);
+        }
+    }
 }
