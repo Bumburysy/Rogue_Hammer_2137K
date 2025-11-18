@@ -17,19 +17,22 @@ public class GameScene implements Scene {
 
     @Override
     public void create() {
-        world = new WorldManager(Layout1.layout);
+        world = new WorldManager(Layout2.layout, sceneManager);
         world.create();
-        world.resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
 
     @Override
     public void update(float delta) {
-        world.update(delta);
+        if (world != null) {
+            world.update(delta);
+        }
+
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            sceneManager.pushScene(new PauseMenuScene(sceneManager, this));
+            pauseGame();
         }
     }
 
+    @Override
     public void resize(int width, int height) {
         if (world != null) {
             world.resize(width, height);
@@ -38,11 +41,24 @@ public class GameScene implements Scene {
 
     @Override
     public void render(SpriteBatch batch) {
+        if (world == null) {
+            return;
+        }
+
+        batch.begin();
         world.render(batch);
+        batch.end();
     }
 
     @Override
     public void dispose() {
-        world.dispose();
+        if (world != null) {
+            world.dispose();
+            world = null;
+        }
+    }
+
+    private void pauseGame() {
+        sceneManager.pushScene(new PauseMenuScene(sceneManager, this));
     }
 }
