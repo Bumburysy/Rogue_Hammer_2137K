@@ -1,4 +1,6 @@
-package project.roguelike.items;
+package project.roguelike.items.passiveItems;
+
+import project.roguelike.items.Item;
 
 public class PassiveItem extends Item {
     private final float speedMultiplier;

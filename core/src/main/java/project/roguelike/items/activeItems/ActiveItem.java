@@ -1,4 +1,6 @@
-package project.roguelike.items;
+package project.roguelike.items.activeItems;
+
+import project.roguelike.items.Item;
 
 public abstract class ActiveItem extends Item {
     protected ActiveItem(String id, String name) {
