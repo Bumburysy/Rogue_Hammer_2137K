@@ -4,6 +4,9 @@ import project.roguelike.rooms.Room;
 import project.roguelike.entities.*;
 import project.roguelike.items.Item;
 import project.roguelike.items.weapons.*;
+import project.roguelike.items.activeItems.*;
+import project.roguelike.items.consumableItems.SmallHealthPotion;
+
 import com.badlogic.gdx.math.Vector2;
 import java.util.Random;
 
@@ -85,6 +88,13 @@ public class RoomContentGenerator {
                 return new Sniper();
             case "smg":
                 return new Smg();
+
+            case "medkit":
+                return new MedKit();
+
+            case "small_health_potion":
+                return new SmallHealthPotion();
+
             default:
                 return null;
         }
