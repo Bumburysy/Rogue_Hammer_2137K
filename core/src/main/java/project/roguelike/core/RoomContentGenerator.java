@@ -7,6 +7,13 @@ import project.roguelike.items.weapons.*;
 import project.roguelike.items.activeItems.*;
 import project.roguelike.items.consumableItems.LargeHealthPotion;
 import project.roguelike.items.consumableItems.SmallHealthPotion;
+import project.roguelike.items.passiveItems.BulletSpeedBoost;
+import project.roguelike.items.passiveItems.DamageBoost;
+import project.roguelike.items.passiveItems.FireRateBoost;
+import project.roguelike.items.passiveItems.MagazineSizeBoost;
+import project.roguelike.items.passiveItems.MaxHpBoost;
+import project.roguelike.items.passiveItems.MovementSpeedBoost;
+import project.roguelike.items.passiveItems.ReloadSpeedBoost;
 
 import com.badlogic.gdx.math.Vector2;
 import java.util.Random;
@@ -97,6 +104,21 @@ public class RoomContentGenerator {
                 return new SmallHealthPotion();
             case "large_health_potion":
                 return new LargeHealthPotion();
+
+            case "speed_boost":
+                return new MovementSpeedBoost();
+            case "max_hp_boost":
+                return new MaxHpBoost();
+            case "damage_boost":
+                return new DamageBoost();
+            case "bullet_speed_boost":
+                return new BulletSpeedBoost();
+            case "fire_rate_boost":
+                return new FireRateBoost();
+            case "magazine_size_boost":
+                return new MagazineSizeBoost();
+            case "reload_speed_boost":
+                return new ReloadSpeedBoost();
 
             default:
                 return null;
