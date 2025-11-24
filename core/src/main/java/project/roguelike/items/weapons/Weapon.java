@@ -4,9 +4,9 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import project.roguelike.core.GameConfig;
-import project.roguelike.items.activeItems.ActiveItem;
+import project.roguelike.items.Item;
 
-public abstract class Weapon extends ActiveItem {
+public abstract class Weapon extends Item {
     private static final float MUZZLE_DISTANCE_RATIO = 0.5f;
 
     private final float baseCooldown;
@@ -26,7 +26,7 @@ public abstract class Weapon extends ActiveItem {
 
     protected Weapon(String id, String name, float cooldown, float bulletSpeed,
             float damage, int magazineSize, float reloadTime, boolean isAutomatic) {
-        super(id, name);
+        super(id, name, ItemType.WEAPON);
         this.baseCooldown = cooldown;
         this.currentCooldown = cooldown;
         this.bulletSpeed = bulletSpeed;
