@@ -39,6 +39,9 @@ public abstract class Item {
         this.height = this.width * aspect;
     }
 
+    public void update(float delta) {
+    }
+
     public void render(SpriteBatch batch) {
         if (!canRender()) {
             return;
@@ -47,6 +50,17 @@ public abstract class Item {
         batch.draw(texture,
                 position.x - width / 2f,
                 position.y - height / 2f,
+                width, height);
+    }
+
+    public void render(SpriteBatch batch, Vector2 renderPosition) {
+        if (texture == null || renderPosition == null) {
+            return;
+        }
+
+        batch.draw(texture,
+                renderPosition.x - width / 2f,
+                renderPosition.y - height / 2f,
                 width, height);
     }
 
