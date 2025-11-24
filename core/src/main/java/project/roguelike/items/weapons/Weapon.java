@@ -13,7 +13,8 @@ public abstract class Weapon extends Item {
     private float currentCooldown;
     private final float bulletSpeed;
     private final float damage;
-    private final int magazineSize;
+    private int magazineSize;
+    private final int baseMagazineSize;
     private final float reloadTime;
     private final boolean isAutomatic;
 
@@ -32,6 +33,7 @@ public abstract class Weapon extends Item {
         this.bulletSpeed = bulletSpeed;
         this.damage = damage;
         this.magazineSize = magazineSize;
+        this.baseMagazineSize = magazineSize;
         this.reloadTime = reloadTime;
         this.isAutomatic = isAutomatic;
         this.currentAmmo = magazineSize;
@@ -198,5 +200,26 @@ public abstract class Weapon extends Item {
 
     public float getReloadTime() {
         return reloadTime;
+    }
+
+    public float getRawReloadProgress() {
+        return reloadProgress;
+    }
+
+    public void setReloadProgress(float progress) {
+        this.reloadProgress = progress;
+    }
+
+    public void setMagazineSize(int newSize) {
+        int ammoDifference = newSize - this.magazineSize;
+        this.magazineSize = newSize;
+
+        if (ammoDifference > 0 && !isReloading) {
+            this.currentAmmo = Math.min(this.currentAmmo + ammoDifference, this.magazineSize);
+        }
+    }
+
+    public int getBaseMagazineSize() {
+        return baseMagazineSize;
     }
 }
