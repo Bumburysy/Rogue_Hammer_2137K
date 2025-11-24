@@ -9,6 +9,7 @@ import project.roguelike.scenes.GameOverScene;
 public class SceneManager {
     private final Stack<Scene> sceneStack = new Stack<>();
     private Scene backgroundScene = null;
+    private final InputManager globalInputManager = new InputManager();
 
     public void setScene(Scene scene) {
         if (isGameOverTransition(scene)) {
@@ -74,6 +75,10 @@ public class SceneManager {
     public void dispose() {
         disposeBackground();
         disposeSceneStack();
+    }
+
+    public InputManager getInputManager() {
+        return globalInputManager;
     }
 
     private boolean isGameOverTransition(Scene scene) {
