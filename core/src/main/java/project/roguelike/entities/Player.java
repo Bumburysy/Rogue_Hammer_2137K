@@ -13,6 +13,7 @@ import project.roguelike.core.InputState;
 import project.roguelike.items.Item;
 import project.roguelike.items.activeItems.ActiveItem;
 import project.roguelike.items.consumableItems.ConsumableItem;
+import project.roguelike.items.currencyItems.CurrencyItem;
 import project.roguelike.items.passiveItems.PassiveItem;
 import project.roguelike.items.weapons.Weapon;
 import project.roguelike.rooms.Room;
@@ -56,6 +57,9 @@ public class Player {
     private float bulletSpeedMultiplier = 1f;
     private float fireRateMultiplier = 1f;
     private float magazineSizeMultiplier = 1f;
+
+    private int keys = 0;
+    private int coins = 0;
 
     private final List<Bullet> bullets = new ArrayList<>();
 
@@ -173,6 +177,12 @@ public class Player {
             case WEAPON:
                 if (item instanceof Weapon) {
                     addWeapon((Weapon) item);
+                }
+                break;
+            case CURRENCY:
+                if (item instanceof CurrencyItem) {
+                    CurrencyItem currency = (CurrencyItem) item;
+                    currency.onPickup(this);
                 }
                 break;
         }
@@ -526,4 +536,39 @@ public class Player {
         }
     }
 
+    public void addKeys(int amount) {
+        keys += amount;
+    }
+
+    public void addCoins(int amount) {
+        coins += amount;
+    }
+
+    public boolean hasKeys(int amount) {
+        return keys >= amount;
+    }
+
+    public boolean hasCoins(int amount) {
+        return coins >= amount;
+    }
+
+    public void spendKeys(int amount) {
+        if (hasKeys(amount)) {
+            keys -= amount;
+        }
+    }
+
+    public void spendCoins(int amount) {
+        if (hasCoins(amount)) {
+            coins -= amount;
+        }
+    }
+
+    public int getKeys() {
+        return keys;
+    }
+
+    public int getCoins() {
+        return coins;
+    }
 }
