@@ -13,17 +13,8 @@ import project.roguelike.core.GameConfig;
 import project.roguelike.core.SceneManager;
 
 public class LoadingScene implements Scene {
-    private static final float FADE_SPEED = 2.5f;
-    private static final float PROGRESS_BAR_WIDTH = 400f;
-    private static final float PROGRESS_BAR_HEIGHT = 30f;
-    private static final float LOADING_SPEED = 1.5f;
     private static final float SCENE_CREATION_THRESHOLD = 0.7f;
     private static final float DEFAULT_MIN_DISPLAY_TIME = 0.5f;
-    private static final float FONT_SCALE = 2f;
-    private static final float LOGO_HEIGHT_MULTIPLIER = 0.8f;
-    private static final float LOGO_Y_OFFSET = 100f;
-    private static final float BAR_Y_OFFSET = -50f;
-    private static final float TEXT_Y_OFFSET = -20f;
 
     private static final Color BACKGROUND_COLOR = new Color(0.1f, 0.1f, 0.3f, 1f);
     private static final Color BAR_BG_COLOR = new Color(0.3f, 0.3f, 0.3f, 1f);
@@ -46,12 +37,12 @@ public class LoadingScene implements Scene {
     private BitmapFont font;
     private final GlyphLayout glyphLayout = new GlyphLayout();
 
-    private float progress = 0f;
-    private float displayTimer = 0f;
-    private float fadeAlpha = 0f;
+    private float progress;
+    private float displayTimer;
+    private float fadeAlpha;
     private boolean fadeIn = true;
-    private boolean fadeOut = false;
-    private boolean targetSceneCreated = false;
+    private boolean fadeOut;
+    private boolean targetSceneCreated;
 
     public LoadingScene(SceneManager sceneManager, SceneType targetSceneType, float minDisplayTime) {
         this.sceneManager = sceneManager;
@@ -106,16 +97,13 @@ public class LoadingScene implements Scene {
 
     @Override
     public void dispose() {
-        if (backgroundTexture != null)
-            backgroundTexture.dispose();
-        if (logoTexture != null)
+        backgroundTexture.dispose();
+        if (logoTexture != null) {
             logoTexture.dispose();
-        if (progressBarBgTexture != null)
-            progressBarBgTexture.dispose();
-        if (progressBarFillTexture != null)
-            progressBarFillTexture.dispose();
-        if (font != null)
-            font.dispose();
+        }
+        progressBarBgTexture.dispose();
+        progressBarFillTexture.dispose();
+        font.dispose();
     }
 
     private Texture createSolidTexture(Color color) {
@@ -138,12 +126,12 @@ public class LoadingScene implements Scene {
     private void initializeFont() {
         font = new BitmapFont();
         font.setColor(Color.WHITE);
-        font.getData().setScale(FONT_SCALE);
+        font.getData().setScale(GameConfig.UI_TEXT_SCALE);
     }
 
     private void updateFadeIn(float delta) {
         if (fadeIn) {
-            fadeAlpha += delta * FADE_SPEED;
+            fadeAlpha += delta * GameConfig.UI_FADE_SPEED;
             if (fadeAlpha >= 1f) {
                 fadeAlpha = 1f;
                 fadeIn = false;
@@ -156,7 +144,7 @@ public class LoadingScene implements Scene {
             return;
         }
 
-        progress += delta * LOADING_SPEED;
+        progress += delta * GameConfig.UI_LOADING_SPEED;
 
         if (progress >= SCENE_CREATION_THRESHOLD && !targetSceneCreated) {
             createTargetScene();
@@ -174,7 +162,7 @@ public class LoadingScene implements Scene {
         }
 
         if (fadeOut) {
-            fadeAlpha -= delta * FADE_SPEED;
+            fadeAlpha -= delta * GameConfig.UI_FADE_SPEED;
             if (fadeAlpha <= 0f) {
                 fadeAlpha = 0f;
                 transitionToTargetScene();
@@ -244,34 +232,34 @@ public class LoadingScene implements Scene {
         float centerY = GameConfig.WORLD_HEIGHT / 2f;
 
         float logoAspect = (float) logoTexture.getWidth() / logoTexture.getHeight();
-        float logoHeight = GameConfig.UI_TITLE_HEIGHT * LOGO_HEIGHT_MULTIPLIER;
-        float logoWidth = logoHeight * logoAspect;
+        float logoWidth = GameConfig.UI_TITLE_HEIGHT * logoAspect;
         float logoX = centerX - logoWidth / 2f;
-        float logoY = centerY + LOGO_Y_OFFSET;
+        float logoY = centerY + GameConfig.UI_ELEMENT_SPACING;
 
         batch.setColor(1f, 1f, 1f, fadeAlpha);
-        batch.draw(logoTexture, logoX, logoY, logoWidth, logoHeight);
+        batch.draw(logoTexture, logoX, logoY, logoWidth, GameConfig.UI_TITLE_HEIGHT);
         batch.setColor(1f, 1f, 1f, 1f);
     }
 
     private void renderProgressBar(SpriteBatch batch) {
         float centerX = GameConfig.WORLD_WIDTH / 2f;
         float centerY = GameConfig.WORLD_HEIGHT / 2f;
-        float barX = centerX - PROGRESS_BAR_WIDTH / 2f;
-        float barY = centerY + BAR_Y_OFFSET;
+        float barX = centerX - GameConfig.UI_PROGRESS_BAR_WIDTH / 2f;
+        float barY = centerY - GameConfig.UI_ELEMENT_SPACING;
 
         batch.setColor(1f, 1f, 1f, fadeAlpha);
-        batch.draw(progressBarBgTexture, barX, barY, PROGRESS_BAR_WIDTH, PROGRESS_BAR_HEIGHT);
+        batch.draw(progressBarBgTexture, barX, barY, GameConfig.UI_PROGRESS_BAR_WIDTH,
+                GameConfig.UI_PROGRESS_BAR_HEIGHT);
 
-        float fillWidth = PROGRESS_BAR_WIDTH * progress;
-        batch.draw(progressBarFillTexture, barX, barY, fillWidth, PROGRESS_BAR_HEIGHT);
+        float fillWidth = GameConfig.UI_PROGRESS_BAR_WIDTH * progress;
+        batch.draw(progressBarFillTexture, barX, barY, fillWidth, GameConfig.UI_PROGRESS_BAR_HEIGHT);
         batch.setColor(1f, 1f, 1f, 1f);
     }
 
     private void renderLoadingText(SpriteBatch batch) {
         float centerX = GameConfig.WORLD_WIDTH / 2f;
         float centerY = GameConfig.WORLD_HEIGHT / 2f;
-        float textY = centerY + BAR_Y_OFFSET + TEXT_Y_OFFSET;
+        float textY = centerY - GameConfig.UI_ELEMENT_SPACING - GameConfig.UI_PROGRESS_BAR_HEIGHT - 20f;
 
         String loadingText = formatLoadingText();
         glyphLayout.setText(font, loadingText);
