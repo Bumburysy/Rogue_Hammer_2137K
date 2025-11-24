@@ -16,14 +16,6 @@ import project.roguelike.core.GameConfig;
 import project.roguelike.core.SceneManager;
 
 public class GameOverScene implements Scene {
-    private static final float OVERLAY_ALPHA = 0.8f;
-    private static final float FADE_SPEED = 1.5f;
-    private static final float FADE_THRESHOLD = 0.5f;
-    private static final float FONT_SCALE = 1.5f;
-    private static final float STATS_START_Y = 550f;
-    private static final float STATS_LINE_HEIGHT = 35f;
-    private static final float STATS_HEADER_SPACING = 1.5f;
-
     private final SceneManager sceneManager;
     private GameStats stats;
 
@@ -36,13 +28,44 @@ public class GameOverScene implements Scene {
     private Rectangle playAgainBounds;
     private Rectangle quitBounds;
 
-    private boolean playAgainHovered = false;
-    private boolean quitHovered = false;
+    private boolean playAgainHovered;
+    private boolean quitHovered;
 
     private BitmapFont font;
     private final GlyphLayout glyphLayout = new GlyphLayout();
-    private float fadeAlpha = 0f;
-    private boolean fadeInDone = false;
+    private float fadeAlpha;
+    private boolean fadeInDone;
+
+    private static class VerticalLayout {
+        private float y;
+        private final float spacing;
+
+        public VerticalLayout(float startY, float spacing) {
+            this.y = startY;
+            this.spacing = spacing;
+        }
+
+        public static VerticalLayout fromTop(float spacing) {
+            float startY = GameConfig.WORLD_HEIGHT - GameConfig.UI_TITLE_MARGIN_TOP
+                    - GameConfig.UI_TITLE_HEIGHT
+                    - GameConfig.UI_TITLE_MARGIN_BOTTOM;
+            return new VerticalLayout(startY, spacing);
+        }
+
+        public float getCurrentY() {
+            return y;
+        }
+
+        public float advance() {
+            return advance(1);
+        }
+
+        public float advance(int steps) {
+            y -= spacing * steps;
+            return y;
+        }
+
+    }
 
     public static class GameStats {
         public final int enemiesKilled;
@@ -91,7 +114,7 @@ public class GameOverScene implements Scene {
         batch.begin();
         renderOverlay(batch);
 
-        if (fadeAlpha >= FADE_THRESHOLD) {
+        if (fadeAlpha >= 0.5f) {
             ensureStatsValid();
             renderTitle(batch);
             renderStatistics(batch);
@@ -109,21 +132,16 @@ public class GameOverScene implements Scene {
 
     @Override
     public void dispose() {
-        if (overlayTexture != null)
-            overlayTexture.dispose();
-        if (titleTexture != null)
-            titleTexture.dispose();
-        if (playAgainTexture != null)
-            playAgainTexture.dispose();
-        if (quitTexture != null)
-            quitTexture.dispose();
-        if (font != null)
-            font.dispose();
+        overlayTexture.dispose();
+        titleTexture.dispose();
+        playAgainTexture.dispose();
+        quitTexture.dispose();
+        font.dispose();
     }
 
     private Texture createOverlayTexture() {
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-        pixmap.setColor(0f, 0f, 0f, OVERLAY_ALPHA);
+        pixmap.setColor(0f, 0f, 0f, GameConfig.UI_OVERLAY_ALPHA);
         pixmap.fill();
         Texture texture = new Texture(pixmap);
         pixmap.dispose();
@@ -139,30 +157,29 @@ public class GameOverScene implements Scene {
     private void initializeFont() {
         font = new BitmapFont();
         font.setColor(Color.WHITE);
-        font.getData().setScale(FONT_SCALE);
+        font.getData().setScale(GameConfig.UI_TEXT_SCALE_SMALL);
     }
 
     private void calculateButtonBounds() {
         float centerX = GameConfig.WORLD_WIDTH / 2f;
-        float btnH = GameConfig.UI_BUTTON_HEIGHT;
-        float startY = 250f;
-        float spacing = GameConfig.UI_BUTTON_SPACING;
+        VerticalLayout layout = VerticalLayout.fromTop(GameConfig.UI_ELEMENT_SPACING_COMPACT);
+        layout.advance(6);
+        layout.advance();
+        playAgainBounds = createCenteredButtonBounds(playAgainTexture, centerX, layout.getCurrentY());
+        layout.advance();
 
-        float playAgainW = calculateButtonWidth(playAgainTexture, btnH);
-        playAgainBounds = new Rectangle(centerX - playAgainW / 2f, startY, playAgainW, btnH);
-
-        float quitW = calculateButtonWidth(quitTexture, btnH);
-        quitBounds = new Rectangle(centerX - quitW / 2f, startY - spacing, quitW, btnH);
+        quitBounds = createCenteredButtonBounds(quitTexture, centerX, layout.getCurrentY());
     }
 
-    private float calculateButtonWidth(Texture texture, float height) {
+    private Rectangle createCenteredButtonBounds(Texture texture, float centerX, float y) {
         float aspect = (float) texture.getWidth() / texture.getHeight();
-        return height * aspect;
+        float width = GameConfig.UI_ELEMENT_HEIGHT * aspect;
+        return new Rectangle(centerX - width / 2f, y, width, GameConfig.UI_ELEMENT_HEIGHT);
     }
 
     private void updateFade(float delta) {
         if (!fadeInDone) {
-            fadeAlpha += delta * FADE_SPEED;
+            fadeAlpha += delta * GameConfig.UI_FADE_SPEED;
             if (fadeAlpha >= 1f) {
                 fadeAlpha = 1f;
                 fadeInDone = true;
@@ -200,7 +217,8 @@ public class GameOverScene implements Scene {
     }
 
     private void restartGame() {
-        sceneManager.setScene(new LoadingScene(sceneManager, LoadingScene.SceneType.GAME, 0.8f));
+        sceneManager.setScene(
+                new LoadingScene(sceneManager, LoadingScene.SceneType.GAME, GameConfig.UI_OVERLAY_ALPHA));
     }
 
     private void returnToMenu() {
@@ -215,43 +233,41 @@ public class GameOverScene implements Scene {
 
     private void renderTitle(SpriteBatch batch) {
         float centerX = GameConfig.WORLD_WIDTH / 2f;
-        float titleHeight = GameConfig.UI_TITLE_HEIGHT;
-        float titleWidth = calculateButtonWidth(titleTexture, titleHeight);
-        float titleX = centerX - titleWidth / 2f;
-        float titleY = GameConfig.WORLD_HEIGHT - titleHeight - GameConfig.UI_TITLE_TOP_MARGIN;
+        float aspect = (float) titleTexture.getWidth() / titleTexture.getHeight();
+        float width = GameConfig.UI_TITLE_HEIGHT * aspect;
+        float x = centerX - width / 2f;
+        float y = GameConfig.WORLD_HEIGHT - GameConfig.UI_TITLE_HEIGHT - GameConfig.UI_TITLE_MARGIN_TOP;
 
-        batch.draw(titleTexture, titleX, titleY, titleWidth, titleHeight);
+        batch.draw(titleTexture, x, y, width, GameConfig.UI_TITLE_HEIGHT);
     }
 
     private void renderStatistics(SpriteBatch batch) {
         float centerX = GameConfig.WORLD_WIDTH / 2f;
-        float y = STATS_START_Y;
-
+        VerticalLayout layout = VerticalLayout.fromTop(GameConfig.UI_ELEMENT_SPACING_COMPACT);
+        font.getData().setScale(GameConfig.UI_VALUE_TEXT_SCALE);
         font.setColor(Color.GOLD);
-        drawCenteredText(batch, "=== GAME STATISTICS ===", centerX, y);
+        drawCenteredText(batch, "GAME STATISTICS", centerX, layout.getCurrentY());
+        layout.advance();
 
+        font.getData().setScale(GameConfig.UI_TEXT_SCALE_SMALL);
         font.setColor(Color.WHITE);
-        y -= STATS_LINE_HEIGHT * STATS_HEADER_SPACING;
 
-        drawCenteredText(batch, "Enemies Killed: " + stats.enemiesKilled, centerX, y);
-        y -= STATS_LINE_HEIGHT;
+        drawCenteredText(batch, "Enemies Killed: " + stats.enemiesKilled, centerX, layout.getCurrentY());
+        layout.advance();
 
-        drawCenteredText(batch, "Rooms Cleared: " + stats.roomsCleared, centerX, y);
-        y -= STATS_LINE_HEIGHT;
+        drawCenteredText(batch, "Rooms Cleared: " + stats.roomsCleared, centerX, layout.getCurrentY());
+        layout.advance();
 
-        drawCenteredText(batch, "Damage Dealt: " + stats.damageDealt, centerX, y);
-        y -= STATS_LINE_HEIGHT;
+        drawCenteredText(batch, "Damage Dealt: " + stats.damageDealt, centerX, layout.getCurrentY());
+        layout.advance();
 
-        drawCenteredText(batch, "Damage Taken: " + stats.damageTaken, centerX, y);
-        y -= STATS_LINE_HEIGHT;
+        drawCenteredText(batch, "Damage Taken: " + stats.damageTaken, centerX, layout.getCurrentY());
+        layout.advance();
 
-        drawCenteredText(batch, formatSurvivalTime(), centerX, y);
-    }
+        drawCenteredText(batch, formatSurvivalTime(), centerX, layout.getCurrentY());
 
-    private String formatSurvivalTime() {
-        int minutes = (int) (stats.survivalTime / 60);
-        int seconds = (int) (stats.survivalTime % 60);
-        return String.format("Survival Time: %d:%02d", minutes, seconds);
+        font.getData().setScale(GameConfig.UI_TEXT_SCALE_SMALL);
+        font.setColor(Color.WHITE);
     }
 
     private void renderButtons(SpriteBatch batch) {
@@ -266,14 +282,22 @@ public class GameOverScene implements Scene {
         float drawX = bounds.x - (drawW - bounds.width) / 2f;
         float drawY = bounds.y - (drawH - bounds.height) / 2f;
 
-        float tint = hovered ? 1f : GameConfig.UI_BUTTON_INACTIVE_TINT;
+        float tint = hovered ? 1f : GameConfig.UI_INACTIVE_TINT;
         batch.setColor(tint, tint, tint, 1f);
         batch.draw(texture, drawX, drawY, drawW, drawH);
+        batch.setColor(1f, 1f, 1f, 1f);
     }
 
     private void drawCenteredText(SpriteBatch batch, String text, float centerX, float y) {
         glyphLayout.setText(font, text);
         font.draw(batch, text, centerX - glyphLayout.width / 2f, y);
+    }
+
+    private String formatSurvivalTime() {
+        int totalSeconds = (int) stats.survivalTime;
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
+        return String.format("Survival Time: %d:%02d", minutes, seconds);
     }
 
     private void ensureStatsValid() {
