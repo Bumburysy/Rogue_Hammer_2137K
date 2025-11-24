@@ -1,8 +1,9 @@
 package project.roguelike.scenes;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+
+import project.roguelike.core.InputAction;
+import project.roguelike.core.InputManager;
 import project.roguelike.core.SceneManager;
 import project.roguelike.core.WorldManager;
 import project.roguelike.levels.*;
@@ -10,6 +11,7 @@ import project.roguelike.levels.*;
 public class GameScene implements Scene {
     private final SceneManager sceneManager;
     private WorldManager world;
+    private InputManager inputManager;
 
     public GameScene(SceneManager sceneManager) {
         this.sceneManager = sceneManager;
@@ -19,6 +21,7 @@ public class GameScene implements Scene {
     public void create() {
         world = new WorldManager(Layout2.layout, sceneManager);
         world.create();
+        inputManager = sceneManager.getInputManager();
     }
 
     @Override
@@ -27,7 +30,7 @@ public class GameScene implements Scene {
             world.update(delta);
         }
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+        if (inputManager.isActionJustPressed(InputAction.PAUSE)) {
             pauseGame();
         }
     }
