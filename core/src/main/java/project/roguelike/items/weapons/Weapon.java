@@ -79,6 +79,12 @@ public abstract class Weapon extends Item {
         }
     }
 
+    public void forceReload() {
+        currentAmmo = magazineSize;
+        isReloading = false;
+        reloadProgress = 0f;
+    }
+
     public boolean canShoot() {
         return !isReloading && currentAmmo > 0 && timeSinceLastShot >= currentCooldown;
     }
