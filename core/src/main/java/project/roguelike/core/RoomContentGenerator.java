@@ -5,6 +5,7 @@ import project.roguelike.entities.*;
 import project.roguelike.items.Item;
 import project.roguelike.items.weapons.*;
 import project.roguelike.items.activeItems.*;
+import project.roguelike.items.consumableItems.LargeHealthPotion;
 import project.roguelike.items.consumableItems.SmallHealthPotion;
 
 import com.badlogic.gdx.math.Vector2;
@@ -94,6 +95,8 @@ public class RoomContentGenerator {
 
             case "small_health_potion":
                 return new SmallHealthPotion();
+            case "large_health_potion":
+                return new LargeHealthPotion();
 
             default:
                 return null;
