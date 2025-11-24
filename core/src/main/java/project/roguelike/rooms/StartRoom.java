@@ -80,6 +80,11 @@ public class StartRoom extends Room {
         RoomContentPlan plan = new RoomContentPlan();
         Vector2 pistolPos = new Vector2(11f, 3f);
         plan.items.add(new RoomContentPlan.ItemSpawn("pistol", pistolPos));
+        Vector2 medKitPos = new Vector2(11f, 5f);
+        plan.items.add(new RoomContentPlan.ItemSpawn("medkit", medKitPos));
+        Vector2 potionPos = new Vector2(11f, 7f);
+        plan.items.add(new RoomContentPlan.ItemSpawn("small_health_potion", potionPos));
+
         return plan;
     }
 }
