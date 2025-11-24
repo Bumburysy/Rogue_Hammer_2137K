@@ -6,7 +6,7 @@ import com.badlogic.gdx.math.Vector2;
 
 public abstract class Item {
     public enum ItemType {
-        PASSIVE, ACTIVE, CONSUMABLE
+        PASSIVE, ACTIVE, CONSUMABLE, WEAPON
     }
 
     private final String id;
