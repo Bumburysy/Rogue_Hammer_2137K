@@ -68,14 +68,10 @@ public class MainMenuScene implements Scene {
 
     @Override
     public void dispose() {
-        if (titleTexture != null)
-            titleTexture.dispose();
-        if (playTexture != null)
-            playTexture.dispose();
-        if (optionsTexture != null)
-            optionsTexture.dispose();
-        if (quitTexture != null)
-            quitTexture.dispose();
+        titleTexture.dispose();
+        playTexture.dispose();
+        optionsTexture.dispose();
+        quitTexture.dispose();
     }
 
     private void loadTextures() {
@@ -139,35 +135,38 @@ public class MainMenuScene implements Scene {
     }
 
     private void renderTitle(SpriteBatch batch) {
+        float centerX = GameConfig.WORLD_WIDTH / 2f;
         float aspect = (float) titleTexture.getWidth() / titleTexture.getHeight();
-        float height = GameConfig.UI_TITLE_HEIGHT;
-        float width = height * aspect;
-        float x = (GameConfig.WORLD_WIDTH - width) / 2f;
-        float y = GameConfig.WORLD_HEIGHT - height - GameConfig.UI_TITLE_TOP_MARGIN;
+        float width = GameConfig.UI_TITLE_HEIGHT * aspect;
+        float x = centerX - width / 2f;
+        float y = GameConfig.WORLD_HEIGHT - GameConfig.UI_TITLE_HEIGHT - GameConfig.UI_TITLE_MARGIN_TOP;
 
-        batch.draw(titleTexture, x, y, width, height);
+        batch.draw(titleTexture, x, y, width, GameConfig.UI_TITLE_HEIGHT);
     }
 
     private void renderOptions(SpriteBatch batch) {
         Texture[] textures = { playTexture, optionsTexture, quitTexture };
-        float startY = GameConfig.WORLD_HEIGHT / 2f;
-        float spacing = GameConfig.UI_BUTTON_SPACING;
+
+        float y = GameConfig.WORLD_HEIGHT - GameConfig.UI_TITLE_MARGIN_TOP;
+        y -= GameConfig.UI_TITLE_HEIGHT;
+        y -= GameConfig.UI_TITLE_MARGIN_BOTTOM;
 
         for (int i = 0; i < textures.length; i++) {
-            renderOption(batch, textures[i], i, startY - i * spacing);
+            renderOption(batch, textures[i], i, y);
+            y -= GameConfig.UI_ELEMENT_SPACING;
         }
     }
 
     private void renderOption(SpriteBatch batch, Texture texture, int index, float y) {
+        float centerX = GameConfig.WORLD_WIDTH / 2f;
         float aspect = (float) texture.getWidth() / texture.getHeight();
-        float height = GameConfig.UI_BUTTON_HEIGHT;
-        float width = height * aspect;
+        float width = GameConfig.UI_ELEMENT_HEIGHT * aspect;
 
         boolean isHovered = (index == hoveredIndex);
         float scale = isHovered ? GameConfig.UI_HOVER_SCALE : 1.0f;
         float drawWidth = width * scale;
-        float drawHeight = height * scale;
-        float x = (GameConfig.WORLD_WIDTH - drawWidth) / 2f;
+        float drawHeight = GameConfig.UI_ELEMENT_HEIGHT * scale;
+        float x = centerX - drawWidth / 2f;
 
         applyButtonTint(batch, isHovered);
         batch.draw(texture, x, y, drawWidth, drawHeight);
@@ -180,7 +179,7 @@ public class MainMenuScene implements Scene {
         if (isHovered) {
             batch.setColor(Color.WHITE);
         } else {
-            float tint = GameConfig.UI_BUTTON_INACTIVE_TINT;
+            float tint = GameConfig.UI_INACTIVE_TINT;
             batch.setColor(tint, tint, tint, 1f);
         }
     }
