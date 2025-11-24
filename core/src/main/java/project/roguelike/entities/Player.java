@@ -9,8 +9,10 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import project.roguelike.core.GameConfig;
 import project.roguelike.core.GameStatistics;
 import project.roguelike.core.InputManager;
+import project.roguelike.core.InputState;
 import project.roguelike.items.Item;
 import project.roguelike.items.activeItems.ActiveItem;
+import project.roguelike.items.consumableItems.ConsumableItem;
 import project.roguelike.items.passiveItems.PassiveItem;
 import project.roguelike.items.weapons.Weapon;
 import project.roguelike.rooms.Room;
@@ -37,7 +39,7 @@ public class Player {
     private float currentSpeed = BASE_SPEED;
 
     private int maxHealth = BASE_MAX_HEALTH;
-    private int currentHealth = maxHealth;
+    private int currentHealth = 5;
     private boolean isDead = false;
     private boolean deathTriggered = false;
     private float damageFlashTimer = 0f;
@@ -46,7 +48,9 @@ public class Player {
 
     private final List<PassiveItem> passiveItems = new ArrayList<>();
     private final List<ActiveItem> activeItems = new ArrayList<>();
+    private final List<Weapon> weapons = new ArrayList<>();
     private int activeIndex = -1;
+    private int weaponIndex = -1;
     private float cooldownMultiplier = 1f;
 
     private final List<Bullet> bullets = new ArrayList<>();
@@ -84,12 +88,15 @@ public class Player {
             return;
         }
 
-        updateMovement(delta, currentRoom, input);
+        InputState state = input.getState();
+
+        updateMovement(delta, currentRoom, state);
         updateMouseTracking(worldMouse);
-        updateWeapon(delta, worldMouse, input);
+        updateWeapon(delta, worldMouse, state);
+        updateActiveItems(delta, state);
         updateBullets(delta, currentRoom);
         updateDamageFlash(delta);
-        handleItemPickup(currentRoom, input);
+        handleItemPickup(currentRoom, state);
     }
 
     public void render(SpriteBatch batch) {
@@ -144,6 +151,11 @@ public class Player {
 
         switch (item.getType()) {
             case CONSUMABLE:
+                if (item instanceof ConsumableItem) {
+                    ConsumableItem consumable = (ConsumableItem) item;
+                    consumable.onConsume(this);
+                    System.out.println("Consumed: " + consumable.getName());
+                }
                 break;
             case PASSIVE:
                 if (item instanceof PassiveItem) {
@@ -153,6 +165,11 @@ public class Player {
             case ACTIVE:
                 if (item instanceof ActiveItem) {
                     addActiveItem((ActiveItem) item);
+                }
+                break;
+            case WEAPON:
+                if (item instanceof Weapon) {
+                    addWeapon((Weapon) item);
                 }
                 break;
         }
@@ -176,20 +193,30 @@ public class Player {
             activeIndex = 0;
         }
 
-        if (item instanceof Weapon) {
-            ((Weapon) item).updateCooldownMultiplier(cooldownMultiplier);
+        System.out.println("Picked up active item: " + item.getName());
+    }
+
+    public void addWeapon(Weapon weapon) {
+        if (weapon == null) {
+            return;
+        }
+        weapons.add(weapon);
+        weapon.updateCooldownMultiplier(cooldownMultiplier);
+
+        if (weaponIndex < 0) {
+            weaponIndex = 0;
         }
     }
 
-    public void switchActive(int dir) {
-        if (activeItems.isEmpty()) {
-            activeIndex = -1;
+    public void switchWeapons(int dir) {
+        if (weapons.isEmpty()) {
+            weaponIndex = -1;
             return;
         }
 
-        activeIndex = (activeIndex + dir) % activeItems.size();
-        if (activeIndex < 0) {
-            activeIndex += activeItems.size();
+        weaponIndex = (weaponIndex + dir) % weapons.size();
+        if (weaponIndex < 0) {
+            weaponIndex += weapons.size();
         }
     }
 
@@ -202,15 +229,13 @@ public class Player {
             bullet.dispose();
         }
 
-        for (ActiveItem item : activeItems) {
-            if (item instanceof Weapon) {
-                ((Weapon) item).dispose();
-            }
+        for (Weapon weapon : weapons) {
+            weapon.dispose();
         }
     }
 
-    private void updateMovement(float delta, Room currentRoom, InputManager input) {
-        Vector2 moveDir = input.getMoveDirection();
+    private void updateMovement(float delta, Room currentRoom, InputState state) {
+        Vector2 moveDir = state.getMoveDirection();
         if (!moveDir.isZero()) {
             position.add(moveDir.cpy().scl(currentSpeed * delta));
         }
@@ -234,25 +259,24 @@ public class Player {
         facingLeft = tmpMouse.x < position.x;
     }
 
-    private void updateWeapon(float delta, Vector2 worldMouse, InputManager input) {
-        ActiveItem equipped = getEquippedActive();
-        if (!(equipped instanceof Weapon)) {
+    private void updateWeapon(float delta, Vector2 worldMouse, InputState state) {
+        Weapon equipped = getEquippedWeapon();
+        if (equipped == null) {
             return;
         }
 
-        Weapon weapon = (Weapon) equipped;
-        weapon.update(delta);
+        equipped.update(delta);
 
-        boolean shouldShoot = weapon.isAutomatic()
-                ? input.isShootPressed()
-                : input.isShootJustPressed();
+        boolean shouldShoot = equipped.isAutomatic()
+                ? state.isShootPressed()
+                : state.isShootJustPressed();
 
-        if (shouldShoot && weapon.canShoot()) {
-            fireWeapon(weapon, worldMouse);
+        if (shouldShoot && equipped.canShoot()) {
+            fireWeapon(equipped, worldMouse);
         }
 
-        if (input.isReloadPressed()) {
-            weapon.startReload();
+        if (state.isReloadPressed()) {
+            equipped.startReload();
         }
     }
 
@@ -298,11 +322,11 @@ public class Player {
 
     private void updateDeath(float delta) {
         deathTimer += delta;
-        deathRotation = Math.min(180f, deathTimer * DEATH_ROTATION_SPEED);
+        deathRotation = Math.min(90f, deathTimer * DEATH_ROTATION_SPEED);
     }
 
-    private void handleItemPickup(Room currentRoom, InputManager input) {
-        if (!input.isPickupPressed()) {
+    private void handleItemPickup(Room currentRoom, InputState state) {
+        if (!state.isUsePressed()) {
             return;
         }
 
@@ -310,6 +334,7 @@ public class Player {
         if (nearby != null) {
             pickUpItem(nearby);
             currentRoom.removeItem(nearby);
+            System.out.println("Picked up active item: " + nearby.getName());
         }
     }
 
@@ -319,11 +344,11 @@ public class Player {
     }
 
     private void renderWeapon(SpriteBatch batch) {
-        ActiveItem equipped = getEquippedActive();
-        if (equipped instanceof Weapon) {
+        Weapon equipped = getEquippedWeapon();
+        if (equipped != null) {
             float angle = (float) Math.toDegrees(
                     Math.atan2(tmpMouse.y - position.y, tmpMouse.x - position.x));
-            ((Weapon) equipped).render(batch, position, angle, facingLeft, bounds.width, bounds.height);
+            equipped.render(batch, position, angle, facingLeft, bounds.width, bounds.height);
         }
     }
 
@@ -363,9 +388,8 @@ public class Player {
             this.currentHealth = Math.min(this.currentHealth + healthDelta, this.maxHealth);
         }
 
-        ActiveItem equipped = getEquippedActive();
-        if (equipped instanceof Weapon) {
-            ((Weapon) equipped).updateCooldownMultiplier(cooldownMultiplier);
+        for (Weapon weapon : weapons) {
+            weapon.updateCooldownMultiplier(cooldownMultiplier);
         }
     }
 
@@ -389,7 +413,34 @@ public class Player {
         return isDead;
     }
 
-    public ActiveItem getEquippedActive() {
+    public Weapon getEquippedWeapon() {
+        if (weaponIndex >= 0 && weaponIndex < weapons.size()) {
+            return weapons.get(weaponIndex);
+        }
+        return null;
+    }
+
+    public List<Weapon> getWeapons() {
+        return weapons;
+    }
+
+    public int getWeaponIndex() {
+        return weaponIndex;
+    }
+
+    public int getMaxHealth() {
+        return maxHealth;
+    }
+
+    public List<ActiveItem> getActiveItems() {
+        return activeItems;
+    }
+
+    public int getActiveItemIndex() {
+        return activeIndex;
+    }
+
+    public ActiveItem getSelectedActiveItem() {
         if (activeIndex >= 0 && activeIndex < activeItems.size()) {
             return activeItems.get(activeIndex);
         }
@@ -403,4 +454,38 @@ public class Player {
         }
         return false;
     }
+
+    private void updateActiveItems(float delta, InputState state) {
+        for (ActiveItem item : activeItems) {
+            item.update(delta);
+        }
+
+        if (state.isSelectActiveItemPrevPressed() && !activeItems.isEmpty()) {
+            switchActiveItems(-1);
+        } else if (state.isSelectActiveItemNextPressed() && !activeItems.isEmpty()) {
+            switchActiveItems(1);
+        }
+
+        if (state.isUseActiveItemPressed() && activeIndex >= 0 && activeIndex < activeItems.size()) {
+            ActiveItem selected = activeItems.get(activeIndex);
+            if (selected.canUse()) {
+                selected.use(this);
+            } else {
+                System.out.println("On cooldown: " + (int) selected.getCurrentCooldown() + "s");
+            }
+        }
+    }
+
+    public void switchActiveItems(int dir) {
+        if (activeItems.isEmpty()) {
+            activeIndex = -1;
+            return;
+        }
+
+        activeIndex = (activeIndex + dir) % activeItems.size();
+        if (activeIndex < 0) {
+            activeIndex += activeItems.size();
+        }
+    }
+
 }
