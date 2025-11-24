@@ -83,8 +83,9 @@ public class StartRoom extends Room {
         Vector2 medKitPos = new Vector2(11f, 5f);
         plan.items.add(new RoomContentPlan.ItemSpawn("medkit", medKitPos));
         Vector2 potionPos = new Vector2(11f, 7f);
+        Vector2 potionPos2 = new Vector2(11f, 9f);
         plan.items.add(new RoomContentPlan.ItemSpawn("small_health_potion", potionPos));
-
+        plan.items.add(new RoomContentPlan.ItemSpawn("large_health_potion", potionPos2));
         return plan;
     }
 }
