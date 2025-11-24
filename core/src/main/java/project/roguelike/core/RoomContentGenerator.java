@@ -7,6 +7,8 @@ import project.roguelike.items.weapons.*;
 import project.roguelike.items.activeItems.*;
 import project.roguelike.items.consumableItems.LargeHealthPotion;
 import project.roguelike.items.consumableItems.SmallHealthPotion;
+import project.roguelike.items.currencyItems.Coin;
+import project.roguelike.items.currencyItems.Key;
 import project.roguelike.items.passiveItems.BulletSpeedBoost;
 import project.roguelike.items.passiveItems.DamageBoost;
 import project.roguelike.items.passiveItems.FireRateBoost;
@@ -99,6 +101,8 @@ public class RoomContentGenerator {
 
             case "medkit":
                 return new MedKit();
+            case "ammo_box":
+                return new AmmoBox();
 
             case "small_health_potion":
                 return new SmallHealthPotion();
@@ -119,6 +123,11 @@ public class RoomContentGenerator {
                 return new MagazineSizeBoost();
             case "reload_speed_boost":
                 return new ReloadSpeedBoost();
+
+            case "key":
+                return new Key();
+            case "coin":
+                return new Coin();
 
             default:
                 return null;
