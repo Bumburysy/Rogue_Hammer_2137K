@@ -15,9 +15,6 @@ import project.roguelike.core.GameConfig;
 import project.roguelike.core.SceneManager;
 
 public class PauseMenuScene implements Scene {
-    private static final float OVERLAY_ALPHA = 0.7f;
-    private static final float START_Y_OFFSET = 60f;
-
     private final SceneManager sceneManager;
     private final GameScene gameScene;
     private final Vector3 mousePosition = new Vector3();
@@ -33,9 +30,9 @@ public class PauseMenuScene implements Scene {
     private Rectangle optionsBounds;
     private Rectangle quitBounds;
 
-    private boolean resumeHovered = false;
-    private boolean optionsHovered = false;
-    private boolean quitHovered = false;
+    private boolean resumeHovered;
+    private boolean optionsHovered;
+    private boolean quitHovered;
 
     public PauseMenuScene(SceneManager sceneManager, GameScene gameScene) {
         this.sceneManager = sceneManager;
@@ -62,12 +59,10 @@ public class PauseMenuScene implements Scene {
 
     @Override
     public void render(SpriteBatch batch) {
-        // Renderuj grę w tle
         if (gameScene != null) {
             gameScene.render(batch);
         }
 
-        // Nakładka pause menu
         viewport.apply();
         batch.setProjectionMatrix(viewport.getCamera().combined);
 
@@ -89,22 +84,17 @@ public class PauseMenuScene implements Scene {
 
     @Override
     public void dispose() {
-        if (overlayTexture != null)
-            overlayTexture.dispose();
-        if (titleTexture != null)
-            titleTexture.dispose();
-        if (resumeTexture != null)
-            resumeTexture.dispose();
-        if (optionsTexture != null)
-            optionsTexture.dispose();
-        if (quitTexture != null)
-            quitTexture.dispose();
+        overlayTexture.dispose();
+        titleTexture.dispose();
+        resumeTexture.dispose();
+        optionsTexture.dispose();
+        quitTexture.dispose();
         hideCursor();
     }
 
     private Texture createOverlayTexture() {
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-        pixmap.setColor(0f, 0f, 0f, OVERLAY_ALPHA);
+        pixmap.setColor(0f, 0f, 0f, GameConfig.UI_OVERLAY_ALPHA);
         pixmap.fill();
         Texture texture = new Texture(pixmap);
         pixmap.dispose();
@@ -120,19 +110,24 @@ public class PauseMenuScene implements Scene {
 
     private void initializeBounds() {
         float centerX = GameConfig.WORLD_WIDTH / 2f;
-        float btnHeight = GameConfig.UI_BUTTON_HEIGHT;
-        float startY = GameConfig.WORLD_HEIGHT / 2f + START_Y_OFFSET;
-        float spacing = GameConfig.UI_BUTTON_SPACING;
 
-        resumeBounds = createButtonBounds(resumeTexture, centerX, startY, btnHeight);
-        optionsBounds = createButtonBounds(optionsTexture, centerX, startY - spacing, btnHeight);
-        quitBounds = createButtonBounds(quitTexture, centerX, startY - spacing * 2, btnHeight);
+        float y = GameConfig.WORLD_HEIGHT - GameConfig.UI_TITLE_MARGIN_TOP;
+        y -= GameConfig.UI_TITLE_HEIGHT;
+        y -= GameConfig.UI_TITLE_MARGIN_BOTTOM;
+
+        resumeBounds = createButtonBounds(resumeTexture, centerX, y);
+        y -= GameConfig.UI_ELEMENT_SPACING;
+
+        optionsBounds = createButtonBounds(optionsTexture, centerX, y);
+        y -= GameConfig.UI_ELEMENT_SPACING;
+
+        quitBounds = createButtonBounds(quitTexture, centerX, y);
     }
 
-    private Rectangle createButtonBounds(Texture texture, float centerX, float y, float height) {
+    private Rectangle createButtonBounds(Texture texture, float centerX, float y) {
         float aspect = (float) texture.getWidth() / texture.getHeight();
-        float width = height * aspect;
-        return new Rectangle(centerX - width / 2f, y, width, height);
+        float width = GameConfig.UI_ELEMENT_HEIGHT * aspect;
+        return new Rectangle(centerX - width / 2f, y, width, GameConfig.UI_ELEMENT_HEIGHT);
     }
 
     private void showCursor() {
@@ -194,13 +189,12 @@ public class PauseMenuScene implements Scene {
     private void renderTitle(SpriteBatch batch) {
         float centerX = GameConfig.WORLD_WIDTH / 2f;
         float aspect = (float) titleTexture.getWidth() / titleTexture.getHeight();
-        float height = GameConfig.UI_TITLE_HEIGHT;
-        float width = height * aspect;
+        float width = GameConfig.UI_TITLE_HEIGHT * aspect;
         float x = centerX - width / 2f;
-        float y = GameConfig.WORLD_HEIGHT - height - GameConfig.UI_TITLE_TOP_MARGIN;
+        float y = GameConfig.WORLD_HEIGHT - GameConfig.UI_TITLE_HEIGHT - GameConfig.UI_TITLE_MARGIN_TOP;
 
         batch.setColor(Color.WHITE);
-        batch.draw(titleTexture, x, y, width, height);
+        batch.draw(titleTexture, x, y, width, GameConfig.UI_TITLE_HEIGHT);
     }
 
     private void renderButtons(SpriteBatch batch) {
@@ -224,7 +218,7 @@ public class PauseMenuScene implements Scene {
         if (hovered) {
             batch.setColor(Color.WHITE);
         } else {
-            float tint = GameConfig.UI_BUTTON_INACTIVE_TINT;
+            float tint = GameConfig.UI_INACTIVE_TINT;
             batch.setColor(tint, tint, tint, 1f);
         }
     }
