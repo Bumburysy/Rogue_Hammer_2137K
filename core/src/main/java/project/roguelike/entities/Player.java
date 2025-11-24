@@ -51,7 +51,11 @@ public class Player {
     private final List<Weapon> weapons = new ArrayList<>();
     private int activeIndex = -1;
     private int weaponIndex = -1;
-    private float cooldownMultiplier = 1f;
+    private float damageMultiplier = 1f;
+    private float reloadSpeedMultiplier = 1f;
+    private float bulletSpeedMultiplier = 1f;
+    private float fireRateMultiplier = 1f;
+    private float magazineSizeMultiplier = 1f;
 
     private final List<Bullet> bullets = new ArrayList<>();
 
@@ -154,7 +158,6 @@ public class Player {
                 if (item instanceof ConsumableItem) {
                     ConsumableItem consumable = (ConsumableItem) item;
                     consumable.onConsume(this);
-                    System.out.println("Consumed: " + consumable.getName());
                 }
                 break;
             case PASSIVE:
@@ -193,7 +196,6 @@ public class Player {
             activeIndex = 0;
         }
 
-        System.out.println("Picked up active item: " + item.getName());
     }
 
     public void addWeapon(Weapon weapon) {
@@ -201,7 +203,8 @@ public class Player {
             return;
         }
         weapons.add(weapon);
-        weapon.updateCooldownMultiplier(cooldownMultiplier);
+
+        applyBoostsToWeapon(weapon);
 
         if (weaponIndex < 0) {
             weaponIndex = 0;
@@ -265,6 +268,12 @@ public class Player {
             return;
         }
 
+        if (equipped.isReloading()) {
+            float boostedDelta = delta / reloadSpeedMultiplier;
+            float currentProgress = equipped.getRawReloadProgress();
+            equipped.setReloadProgress(currentProgress + boostedDelta);
+        }
+
         equipped.update(delta);
 
         boolean shouldShoot = equipped.isAutomatic()
@@ -290,9 +299,13 @@ public class Player {
 
         weapon.shoot();
 
+        float finalDamage = weapon.getDamage() * damageMultiplier;
+
+        float finalBulletSpeed = weapon.getBulletSpeed() * bulletSpeedMultiplier;
+
         Bullet bullet = new Bullet(muzzlePos.x, muzzlePos.y, shootDir);
-        bullet.setSpeed(weapon.getBulletSpeed());
-        bullet.setDamage(weapon.getDamage());
+        bullet.setSpeed(finalBulletSpeed);
+        bullet.setDamage(finalDamage);
         bullet.setStatistics(statistics);
         bullets.add(bullet);
 
@@ -334,7 +347,6 @@ public class Player {
         if (nearby != null) {
             pickUpItem(nearby);
             currentRoom.removeItem(nearby);
-            System.out.println("Picked up active item: " + nearby.getName());
         }
     }
 
@@ -368,17 +380,29 @@ public class Player {
 
     private void recomputeStatsFromPassives() {
         float speedMul = 1f;
-        float cdMul = 1f;
+        float damageMul = 1f;
+        float reloadSpeedMul = 1f;
+        float bulletSpeedMul = 1f;
+        float fireRateMul = 1f;
+        float magazineSizeMul = 1f;
         int hpBonus = 0;
 
         for (PassiveItem item : passiveItems) {
             speedMul *= item.getSpeedMultiplier();
-            cdMul *= item.getShootCooldownMultiplier();
+            damageMul *= item.getDamageMultiplier();
+            reloadSpeedMul *= item.getReloadSpeedMultiplier();
+            bulletSpeedMul *= item.getBulletSpeedMultiplier();
+            fireRateMul *= item.getFireRateMultiplier();
+            magazineSizeMul *= item.getMagazineSizeMultiplier();
             hpBonus += item.getMaxHpBonus();
         }
 
         this.currentSpeed = BASE_SPEED * speedMul;
-        this.cooldownMultiplier = cdMul;
+        this.damageMultiplier = damageMul;
+        this.reloadSpeedMultiplier = reloadSpeedMul;
+        this.bulletSpeedMultiplier = bulletSpeedMul;
+        this.fireRateMultiplier = fireRateMul;
+        this.magazineSizeMultiplier = magazineSizeMul;
 
         int prevMaxHealth = this.maxHealth;
         this.maxHealth = BASE_MAX_HEALTH + hpBonus;
@@ -388,9 +412,23 @@ public class Player {
             this.currentHealth = Math.min(this.currentHealth + healthDelta, this.maxHealth);
         }
 
+        reapplyWeaponBoosts();
+    }
+
+    private void applyBoostsToWeapon(Weapon weapon) {
+        weapon.updateCooldownMultiplier(fireRateMultiplier);
+
+        int baseMagSize = weapon.getBaseMagazineSize();
+        int boostedMagSize = Math.round(baseMagSize * magazineSizeMultiplier);
+        weapon.setMagazineSize(boostedMagSize);
+
+    }
+
+    private void reapplyWeaponBoosts() {
         for (Weapon weapon : weapons) {
-            weapon.updateCooldownMultiplier(cooldownMultiplier);
+            applyBoostsToWeapon(weapon);
         }
+
     }
 
     public Rectangle getBounds() {
