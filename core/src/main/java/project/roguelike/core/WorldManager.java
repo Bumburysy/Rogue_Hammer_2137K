@@ -1,7 +1,6 @@
 package project.roguelike.core;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -105,12 +104,13 @@ public class WorldManager {
 
     public void handleScroll(int amount) {
         if (amount != 0) {
-            player.switchActive(-amount);
+            player.switchWeapons(-amount);
         }
     }
 
     private void initializeInput() {
-        inputManager = new InputManager(this);
+        inputManager = new InputManager();
+        inputManager.setScrollCallback(this::handleScroll);
         Gdx.input.setInputProcessor(inputManager);
         crosshair = new Texture("textures/crosshair.png");
         Gdx.graphics.setSystemCursor(SystemCursor.None);
@@ -229,7 +229,7 @@ public class WorldManager {
 
     private void handleNearDoor(Room.DoorDirection nearDoor, boolean canUseDoor) {
         currentRoom.setActiveDoor(nearDoor, canUseDoor);
-        if (canUseDoor && Gdx.input.isKeyJustPressed(Input.Keys.E)) {
+        if (canUseDoor && inputManager.isActionJustPressed(InputAction.USE)) {
             useDoor(nearDoor);
         }
     }
