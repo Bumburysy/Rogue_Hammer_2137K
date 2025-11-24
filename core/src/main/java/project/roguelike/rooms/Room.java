@@ -25,6 +25,15 @@ public abstract class Room {
     private static final float DOOR_PULSE_ALPHA = 0.5f;
 
     private final Texture floor, wallTop, wallRight, doorUp, doorRight;
+    private final Texture torchHorizontal;
+    private final Texture torchVertical;
+
+    private static final int TORCH_FRAME_WIDTH = 16;
+    private static final int TORCH_FRAME_HEIGHT = 16;
+    private static final int TORCH_FRAME_COUNT = 4;
+    private static final float TORCH_FRAME_DURATION = 0.15f;
+    private float torchStateTime = 0f;
+
     private final TextureRegion floorRegion, wallTopRegion, wallBottomRegion;
     private final TextureRegion wallLeftRegion, wallRightRegion;
     private final TextureRegion doorUpRegion, doorDownRegion, doorLeftRegion, doorRightRegion;
@@ -79,6 +88,8 @@ public abstract class Room {
         this.wallRight = loadTexture("textures/wall_right.png");
         this.doorUp = loadTexture("textures/door_up.png");
         this.doorRight = loadTexture("textures/door_right.png");
+        this.torchHorizontal = loadTexture("textures/torch_horizontal.png");
+        this.torchVertical = loadTexture("textures/torch_vertical.png");
 
         this.floorRegion = new TextureRegion(floor);
         this.wallTopRegion = new TextureRegion(wallTop);
@@ -111,6 +122,7 @@ public abstract class Room {
     public void update(float delta, Player player) {
         updateEnemies(delta, player);
         updateItems(delta);
+        torchStateTime += delta;
         checkRoomCleared();
     }
 
@@ -145,6 +157,8 @@ public abstract class Room {
         wallRight.dispose();
         doorUp.dispose();
         doorRight.dispose();
+        torchHorizontal.dispose();
+        torchVertical.dispose();
     }
 
     public abstract void generateContentIfNeeded();
@@ -346,28 +360,40 @@ public abstract class Room {
                 y = position.y + roomHeight;
                 width = doorWidth;
                 height = wallThickness;
+                renderTorchPair(batch, torchHorizontal,
+                        x + doorWidth / 2f, y + height / 2f, true, false);
                 break;
+
             case DOWN:
                 region = doorDownRegion;
                 x = position.x + roomWidth / 2f - doorWidth / 2f;
                 y = position.y - wallThickness;
                 width = doorWidth;
                 height = wallThickness;
+                renderTorchPair(batch, torchHorizontal,
+                        x + doorWidth / 2f, y + height / 2f, true, true);
                 break;
+
             case LEFT:
                 region = doorLeftRegion;
                 x = position.x - wallThickness / 2f;
                 y = position.y + roomHeight / 2f - doorWidth / 2f;
                 width = wallThickness / 2f;
                 height = doorWidth;
+                renderTorchPair(batch, torchVertical,
+                        x + width * 2, y + doorWidth / 2f, false, false);
                 break;
+
             case RIGHT:
                 region = doorRightRegion;
                 x = position.x + roomWidth;
                 y = position.y + roomHeight / 2f - doorWidth / 2f;
                 width = wallThickness / 2f;
                 height = doorWidth;
+                renderTorchPair(batch, torchVertical,
+                        x - width, y + doorWidth / 2f, false, true);
                 break;
+
             default:
                 return;
         }
@@ -376,6 +402,68 @@ public abstract class Room {
 
         if (isActive) {
             drawDoorOverlay(batch, region, x, y, width, height);
+        }
+    }
+
+    private void renderTorchPair(SpriteBatch batch, Texture torchTexture,
+            float centerX, float centerY, boolean isHorizontal, boolean flipTorches) {
+        float torchOffset = tileSize * 1.5f;
+
+        int currentFrame = (int) ((torchStateTime / TORCH_FRAME_DURATION) % TORCH_FRAME_COUNT);
+        int frameX = currentFrame * TORCH_FRAME_WIDTH;
+
+        if (isHorizontal) {
+            batch.draw(
+                    torchTexture,
+                    centerX - torchOffset - tileSize / 2f,
+                    centerY - tileSize / 2f,
+                    tileSize,
+                    tileSize,
+                    frameX,
+                    0,
+                    TORCH_FRAME_WIDTH,
+                    TORCH_FRAME_HEIGHT,
+                    false,
+                    flipTorches);
+
+            batch.draw(
+                    torchTexture,
+                    centerX + torchOffset - tileSize / 2f,
+                    centerY - tileSize / 2f,
+                    tileSize,
+                    tileSize,
+                    frameX,
+                    0,
+                    TORCH_FRAME_WIDTH,
+                    TORCH_FRAME_HEIGHT,
+                    true,
+                    flipTorches);
+        } else {
+            batch.draw(
+                    torchTexture,
+                    centerX - tileSize / 2f,
+                    centerY + torchOffset - tileSize / 2f,
+                    tileSize,
+                    tileSize,
+                    frameX,
+                    0,
+                    TORCH_FRAME_WIDTH,
+                    TORCH_FRAME_HEIGHT,
+                    flipTorches,
+                    false);
+
+            batch.draw(
+                    torchTexture,
+                    centerX - tileSize / 2f,
+                    centerY - torchOffset - tileSize / 2f,
+                    tileSize,
+                    tileSize,
+                    frameX,
+                    0,
+                    TORCH_FRAME_WIDTH,
+                    TORCH_FRAME_HEIGHT,
+                    flipTorches,
+                    true);
         }
     }
 
