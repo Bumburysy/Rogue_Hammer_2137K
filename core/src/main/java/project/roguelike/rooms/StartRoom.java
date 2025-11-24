@@ -82,10 +82,15 @@ public class StartRoom extends Room {
         plan.items.add(new RoomContentPlan.ItemSpawn("pistol", pistolPos));
         Vector2 medKitPos = new Vector2(11f, 5f);
         plan.items.add(new RoomContentPlan.ItemSpawn("medkit", medKitPos));
-        Vector2 potionPos = new Vector2(11f, 7f);
-        Vector2 potionPos2 = new Vector2(11f, 9f);
-        plan.items.add(new RoomContentPlan.ItemSpawn("small_health_potion", potionPos));
-        plan.items.add(new RoomContentPlan.ItemSpawn("large_health_potion", potionPos2));
+        plan.items.add(new RoomContentPlan.ItemSpawn("small_health_potion", null));
+        plan.items.add(new RoomContentPlan.ItemSpawn("large_health_potion", null));
+        plan.items.add(new RoomContentPlan.ItemSpawn("speed_boost", null));
+        plan.items.add(new RoomContentPlan.ItemSpawn("max_hp_boost", null));
+        plan.items.add(new RoomContentPlan.ItemSpawn("damage_boost", null));
+        plan.items.add(new RoomContentPlan.ItemSpawn("bullet_speed_boost", null));
+        plan.items.add(new RoomContentPlan.ItemSpawn("fire_rate_boost", null));
+        plan.items.add(new RoomContentPlan.ItemSpawn("magazine_size_boost", null));
+        plan.items.add(new RoomContentPlan.ItemSpawn("reload_speed_boost", null));
         return plan;
     }
 }
