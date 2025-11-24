@@ -110,7 +110,14 @@ public abstract class Room {
 
     public void update(float delta, Player player) {
         updateEnemies(delta, player);
+        updateItems(delta);
         checkRoomCleared();
+    }
+
+    private void updateItems(float delta) {
+        for (Item item : items) {
+            item.update(delta);
+        }
     }
 
     public void activate() {
@@ -392,7 +399,9 @@ public abstract class Room {
 
     private void renderItems(SpriteBatch batch) {
         for (Item item : items) {
-            item.render(batch);
+            if (item.getPosition() != null) {
+                item.render(batch, item.getPosition());
+            }
         }
     }
 
