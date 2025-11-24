@@ -60,7 +60,7 @@ public abstract class ConsumableItem extends Item {
 
         TextureRegion currentFrame = idleAnimation.getKeyFrame(stateTime);
 
-        float size = GameConfig.TILE_SIZE / 2f;
+        float size = GameConfig.TILE_SIZE;
         batch.draw(
                 currentFrame,
                 position.x - size / 2f,
