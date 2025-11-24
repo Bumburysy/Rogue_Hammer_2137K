@@ -21,10 +21,37 @@ public class GameConfig {
     public static final float OFFSET_X_RATIO = 0.33f;
     public static final float OFFSET_Y_RATIO = -0.33f;
 
-    public static final float UI_TITLE_HEIGHT = 96f;
-    public static final float UI_BUTTON_HEIGHT = 64f;
+    public static final float UI_TITLE_HEIGHT = 64f;
+    public static final float UI_TITLE_MARGIN_TOP = 128f;
+    public static final float UI_TITLE_MARGIN_BOTTOM = 128f;
+
+    public static final float UI_ELEMENT_SPACING = 128f;
+    public static final float UI_ELEMENT_SPACING_COMPACT = 48f;
+    public static final float UI_ELEMENT_HEIGHT = 32f;
+
+    public static final float UI_TEXT_SCALE = 2f;
+    public static final float UI_TEXT_SCALE_SMALL = 1.5f;
+    public static final float UI_VALUE_TEXT_SCALE = 1.5f;
+
+    public static final float UI_VALUE_Y_OFFSET = 32f;
+
+    public static final float UI_CONTROLS_LABEL_X_OFFSET = 250f;
+    public static final float UI_CONTROLS_BUTTON_X_OFFSET = 100f;
+    public static final float UI_CONTROLS_KEY_X_OFFSET = 128f;
+
+    public static final float UI_MARGIN_BOTTOM = 50f;
+    public static final float UI_MARGIN_SIDE = 150f;
+
     public static final float UI_HOVER_SCALE = 1.1f;
-    public static final float UI_BUTTON_SPACING = 100f;
-    public static final float UI_TITLE_TOP_MARGIN = 100f;
-    public static final float UI_BUTTON_INACTIVE_TINT = 0.8f;
+    public static final float UI_INACTIVE_TINT = 0.8f;
+
+    public static final float UI_OVERLAY_ALPHA = 0.7f;
+    public static final float UI_FADE_SPEED = 2f;
+
+    public static final float UI_LOADING_SPEED = 1.5f;
+    public static final float UI_PROGRESS_BAR_WIDTH = 400f;
+    public static final float UI_PROGRESS_BAR_HEIGHT = 30f;
+
+    public static final int UI_VOLUME_STEP = 10;
+    public static final int UI_MAX_KEYCODE = 256;
 }
