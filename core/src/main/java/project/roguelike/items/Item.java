@@ -90,4 +90,8 @@ public abstract class Item {
     public Vector2 getPosition() {
         return position;
     }
+
+    public Texture getTexture() {
+        return texture;
+    }
 }
