@@ -40,7 +40,7 @@ public class Player {
     private float currentSpeed = BASE_SPEED;
 
     private int maxHealth = BASE_MAX_HEALTH;
-    private int currentHealth = 5;
+    private int currentHealth = 10;
     private boolean isDead = false;
     private boolean deathTriggered = false;
     private float damageFlashTimer = 0f;
