@@ -468,6 +468,30 @@ public class Player {
         return null;
     }
 
+    public Weapon getCurrentWeapon() {
+        return getEquippedWeapon();
+    }
+
+    public Texture getCurrentWeaponTexture() {
+        Weapon weapon = getCurrentWeapon();
+        return weapon != null ? weapon.getTexture() : null;
+    }
+
+    public List<PassiveItem> getPassiveItems() {
+        return passiveItems;
+    }
+
+    public int getActiveItemsCount() {
+        return activeItems.size();
+    }
+
+    public ActiveItem getActiveItem() {
+        if (activeIndex >= 0 && activeIndex < activeItems.size()) {
+            return activeItems.get(activeIndex);
+        }
+        return null;
+    }
+
     public List<Weapon> getWeapons() {
         return weapons;
     }
@@ -518,8 +542,6 @@ public class Player {
             ActiveItem selected = activeItems.get(activeIndex);
             if (selected.canUse()) {
                 selected.use(this);
-            } else {
-                System.out.println("On cooldown: " + (int) selected.getCurrentCooldown() + "s");
             }
         }
     }
