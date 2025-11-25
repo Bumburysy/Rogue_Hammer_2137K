@@ -8,6 +8,7 @@ import project.roguelike.rooms.BossRoom;
 import project.roguelike.rooms.NormalRoom;
 import project.roguelike.rooms.Room;
 import project.roguelike.rooms.StartRoom;
+import project.roguelike.rooms.TrapRoom;
 
 public class LevelGenerator {
     private final float roomWidth;
@@ -64,7 +65,10 @@ public class LevelGenerator {
                 return new StartRoom(position, shape);
             case BOSS:
                 return new BossRoom(position, shape);
+            case TRAP:
+                return new TrapRoom(position, shape);
             case NORMAL:
+                return new NormalRoom(position, shape);
             default:
                 return new NormalRoom(position, shape);
         }
