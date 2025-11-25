@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureWrap;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
@@ -27,12 +28,13 @@ public abstract class Room {
     private final Texture floor, wallTop, wallRight, doorUp, doorRight;
     private final Texture torchHorizontal;
     private final Texture torchVertical;
-
-    private static final int TORCH_FRAME_WIDTH = 16;
-    private static final int TORCH_FRAME_HEIGHT = 16;
-    private static final int TORCH_FRAME_COUNT = 4;
-    private static final float TORCH_FRAME_DURATION = 0.15f;
+    private final Animation<TextureRegion> torchHorizontalAnimation;
+    private final Animation<TextureRegion> torchVerticalAnimation;
     private float torchStateTime = 0f;
+
+    private final Texture bannerTexture;
+    private final Animation<TextureRegion> bannerAnimation;
+    private float bannerStateTime = 0f;
 
     private final TextureRegion floorRegion, wallTopRegion, wallBottomRegion;
     private final TextureRegion wallLeftRegion, wallRightRegion;
@@ -109,6 +111,15 @@ public abstract class Room {
         this.items = new ArrayList<>();
         this.grid = new CellType[innerGridWidth][innerGridHeight];
         initializeGrid();
+
+        this.bannerTexture = loadTexture("textures/banner.png");
+        TextureRegion[][] bannerFrames = TextureRegion.split(bannerTexture, 16, 16);
+        this.bannerAnimation = new Animation<>(0.15f, bannerFrames[0]);
+
+        TextureRegion[][] torchHFrames = TextureRegion.split(torchHorizontal, 16, 16);
+        this.torchHorizontalAnimation = new Animation<>(0.15f, torchHFrames[0]);
+        TextureRegion[][] torchVFrames = TextureRegion.split(torchVertical, 16, 16);
+        this.torchVerticalAnimation = new Animation<>(0.15f, torchVFrames[0]);
     }
 
     public void render(SpriteBatch batch) {
@@ -117,12 +128,14 @@ public abstract class Room {
         renderDoors(batch);
         renderEnemies(batch);
         renderItems(batch);
+        renderBanners(batch);
     }
 
     public void update(float delta, Player player) {
         updateEnemies(delta, player);
         updateItems(delta);
         torchStateTime += delta;
+        bannerStateTime += delta;
         checkRoomCleared();
     }
 
@@ -159,6 +172,7 @@ public abstract class Room {
         doorRight.dispose();
         torchHorizontal.dispose();
         torchVertical.dispose();
+        bannerTexture.dispose();
     }
 
     public abstract void generateContentIfNeeded();
@@ -408,62 +422,42 @@ public abstract class Room {
     private void renderTorchPair(SpriteBatch batch, Texture torchTexture,
             float centerX, float centerY, boolean isHorizontal, boolean flipTorches) {
         float torchOffset = tileSize * 1.5f;
+        Animation<TextureRegion> animation = isHorizontal ? torchHorizontalAnimation : torchVerticalAnimation;
+        TextureRegion frame = animation.getKeyFrame(torchStateTime, true);
 
-        int currentFrame = (int) ((torchStateTime / TORCH_FRAME_DURATION) % TORCH_FRAME_COUNT);
-        int frameX = currentFrame * TORCH_FRAME_WIDTH;
+        TextureRegion leftFrame = new TextureRegion(frame);
+        TextureRegion rightFrame = new TextureRegion(frame);
 
         if (isHorizontal) {
-            batch.draw(
-                    torchTexture,
+            if (flipTorches) {
+                leftFrame.flip(false, true);
+                rightFrame.flip(true, true);
+            } else {
+                rightFrame.flip(true, false);
+            }
+            batch.draw(leftFrame,
                     centerX - torchOffset - tileSize / 2f,
                     centerY - tileSize / 2f,
-                    tileSize,
-                    tileSize,
-                    frameX,
-                    0,
-                    TORCH_FRAME_WIDTH,
-                    TORCH_FRAME_HEIGHT,
-                    false,
-                    flipTorches);
-
-            batch.draw(
-                    torchTexture,
+                    tileSize, tileSize);
+            batch.draw(rightFrame,
                     centerX + torchOffset - tileSize / 2f,
                     centerY - tileSize / 2f,
-                    tileSize,
-                    tileSize,
-                    frameX,
-                    0,
-                    TORCH_FRAME_WIDTH,
-                    TORCH_FRAME_HEIGHT,
-                    true,
-                    flipTorches);
+                    tileSize, tileSize);
         } else {
-            batch.draw(
-                    torchTexture,
+            if (flipTorches) {
+                leftFrame.flip(true, false);
+                rightFrame.flip(true, true);
+            } else {
+                rightFrame.flip(false, true);
+            }
+            batch.draw(leftFrame,
                     centerX - tileSize / 2f,
                     centerY + torchOffset - tileSize / 2f,
-                    tileSize,
-                    tileSize,
-                    frameX,
-                    0,
-                    TORCH_FRAME_WIDTH,
-                    TORCH_FRAME_HEIGHT,
-                    flipTorches,
-                    false);
-
-            batch.draw(
-                    torchTexture,
+                    tileSize, tileSize);
+            batch.draw(rightFrame,
                     centerX - tileSize / 2f,
                     centerY - torchOffset - tileSize / 2f,
-                    tileSize,
-                    tileSize,
-                    frameX,
-                    0,
-                    TORCH_FRAME_WIDTH,
-                    TORCH_FRAME_HEIGHT,
-                    flipTorches,
-                    true);
+                    tileSize, tileSize);
         }
     }
 
@@ -491,6 +485,25 @@ public abstract class Room {
                 item.render(batch, item.getPosition());
             }
         }
+    }
+
+    private void renderBanners(SpriteBatch batch) {
+        float bannerSize = GameConfig.TILE_SIZE;
+        TextureRegion bannerFrame = bannerAnimation.getKeyFrame(bannerStateTime, true);
+
+        float xLeft = getPosition().x;
+        float xRight = getPosition().x + GameConfig.ROOM_WIDTH - GameConfig.TILE_SIZE;
+        float yWallTop = getPosition().y + GameConfig.ROOM_HEIGHT + GameConfig.TILE_SIZE / 4f;
+
+        batch.draw(bannerFrame, xLeft, yWallTop, bannerSize, bannerSize);
+        batch.draw(bannerFrame, xRight, yWallTop, bannerSize, bannerSize);
+
+        float yWallBottom = getPosition().y - GameConfig.TILE_SIZE - GameConfig.TILE_SIZE / 4f;
+        TextureRegion flippedBanner = new TextureRegion(bannerFrame);
+        flippedBanner.flip(false, true);
+
+        batch.draw(flippedBanner, xLeft, yWallBottom, bannerSize, bannerSize);
+        batch.draw(flippedBanner, xRight, yWallBottom, bannerSize, bannerSize);
     }
 
     private Rectangle createDoorBounds(float x, float y, float width, float height) {
