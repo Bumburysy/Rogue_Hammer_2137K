@@ -10,6 +10,7 @@ public class RoomContentPlan {
 
     public List<EnemySpawn> enemies = new ArrayList<>();
     public List<ItemSpawn> items = new ArrayList<>();
+    public List<TrapSpawn> traps = new ArrayList<>();
 
     public static class EnemySpawn {
         public String type;
@@ -27,6 +28,14 @@ public class RoomContentPlan {
 
         public ItemSpawn(String id, Vector2 position) {
             this.id = id;
+            this.position = position;
+        }
+    }
+
+    public static class TrapSpawn {
+        public Vector2 position;
+
+        public TrapSpawn(Vector2 position) {
             this.position = position;
         }
     }
