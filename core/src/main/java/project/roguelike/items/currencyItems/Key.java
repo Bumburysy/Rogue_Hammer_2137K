@@ -17,6 +17,5 @@ public class Key extends CurrencyItem {
     @Override
     public void onPickup(Player player) {
         player.addKeys(value);
-        System.out.println("Picked up Key! Total keys: " + player.getKeys());
     }
 }

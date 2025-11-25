@@ -17,6 +17,5 @@ public class Coin extends CurrencyItem {
     @Override
     public void onPickup(Player player) {
         player.addCoins(value);
-        System.out.println("Picked up Coin! Total coins: " + player.getCoins());
     }
 }
