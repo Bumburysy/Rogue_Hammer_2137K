@@ -32,9 +32,11 @@ public class GameUI {
     private Texture startRoomTexture;
     private Texture bossRoomTexture;
     private Texture normalRoomTexture;
+    private Texture trapRoomTexture;
     private TextureRegion startRoomIcon;
     private TextureRegion bossRoomIcon;
     private TextureRegion normalRoomIcon;
+    private TextureRegion trapRoomIcon;
 
     private static final float UI_HEIGHT = 128f;
     private static final Color UI_BORDER = new Color(0.5f, 0.5f, 0.5f, 1f);
@@ -99,10 +101,12 @@ public class GameUI {
         this.startRoomTexture = new Texture("ui/minimap_start.png");
         this.bossRoomTexture = new Texture("ui/minimap_boss.png");
         this.normalRoomTexture = new Texture("ui/minimap_normal.png");
+        this.trapRoomTexture = new Texture("ui/minimap_trap.png");
 
         this.startRoomIcon = new TextureRegion(startRoomTexture);
         this.bossRoomIcon = new TextureRegion(bossRoomTexture);
         this.normalRoomIcon = new TextureRegion(normalRoomTexture);
+        this.trapRoomIcon = new TextureRegion(trapRoomTexture);
     }
 
     public void render(Viewport viewport, Player player, RoomData[][] layout, int playerRoomRow, int playerRoomCol) {
@@ -466,6 +470,8 @@ public class GameUI {
                     icon = startRoomIcon;
                 else if (room.type == RoomType.BOSS)
                     icon = bossRoomIcon;
+                else if (room.type == RoomType.TRAP)
+                    icon = trapRoomIcon;
                 else
                     icon = normalRoomIcon;
                 float iconSize = roomSize * MINIMAP_ICON_SIZE_RATIO;
@@ -489,5 +495,6 @@ public class GameUI {
         startRoomTexture.dispose();
         bossRoomTexture.dispose();
         normalRoomTexture.dispose();
+        trapRoomTexture.dispose();
     }
 }
