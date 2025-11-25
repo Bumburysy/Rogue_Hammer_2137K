@@ -21,7 +21,6 @@ public class MedKit extends ActiveItem {
 
         if (currentHealth < maxHealth) {
             player.heal(HEAL_AMOUNT);
-            System.out.println("Used Med Kit! Healed " + HEAL_AMOUNT + " HP");
         }
     }
 
