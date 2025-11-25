@@ -13,6 +13,7 @@ import project.roguelike.levels.LevelGenerator;
 import project.roguelike.levels.RoomData;
 import project.roguelike.rooms.*;
 import project.roguelike.scenes.GameOverScene;
+import project.roguelike.ui.GameUI;
 import java.util.*;
 
 public class WorldManager {
@@ -23,6 +24,7 @@ public class WorldManager {
     private InputManager inputManager;
     private final SceneManager sceneManager;
     private final GameStatistics statistics;
+    private final GameUI gameUI;
 
     private final RoomData[][] layout;
     private List<Room> rooms;
@@ -44,6 +46,7 @@ public class WorldManager {
         this.layout = layout;
         this.sceneManager = sceneManager;
         this.statistics = new GameStatistics();
+        this.gameUI = new GameUI();
     }
 
     public void create() {
@@ -86,6 +89,9 @@ public class WorldManager {
         currentRoom.render(batch);
         player.render(batch);
         renderCrosshair(batch);
+        batch.end();
+        gameUI.render(viewport, player, layout, currentRow, currentCol);
+        batch.begin();
     }
 
     public void resize(int width, int height) {
@@ -100,6 +106,7 @@ public class WorldManager {
         disposeRooms();
         disposeCrosshair();
         restoreSystemCursor();
+        gameUI.dispose();
     }
 
     public void handleScroll(int amount) {
