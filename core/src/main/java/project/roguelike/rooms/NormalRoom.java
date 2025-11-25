@@ -7,8 +7,8 @@ import java.util.Random;
 
 public class NormalRoom extends Room {
     private static final Random random = new Random();
-    private static final int MIN_ENEMIES = 1;
-    private static final int MAX_ENEMIES = 5;
+    private static final int MIN_ENEMIES = 0;
+    private static final int MAX_ENEMIES = 0;
 
     public NormalRoom(Vector2 position, RoomShape shape) {
         super(position, shape);
@@ -27,10 +27,7 @@ public class NormalRoom extends Room {
 
     private RoomContentPlan createContentPlan() {
         RoomContentPlan plan = new RoomContentPlan();
-
         addRandomEnemies(plan);
-        addStartingWeapon(plan);
-
         return plan;
     }
 
@@ -43,9 +40,5 @@ public class NormalRoom extends Room {
             String type = random.nextBoolean() ? "goblin" : "orc";
             plan.enemies.add(new RoomContentPlan.EnemySpawn(type, null));
         }
-    }
-
-    private void addStartingWeapon(RoomContentPlan plan) {
-        plan.items.add(new RoomContentPlan.ItemSpawn("smg", null));
     }
 }
