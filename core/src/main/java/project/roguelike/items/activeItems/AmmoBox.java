@@ -18,7 +18,6 @@ public class AmmoBox extends ActiveItem {
 
     @Override
     protected void onUse(Player player) {
-        int weaponsReloaded = 0;
 
         for (Weapon weapon : player.getWeapons()) {
             if (weapon.getCurrentAmmo() < weapon.getMagazineSize() || weapon.isReloading()) {
@@ -27,14 +26,7 @@ public class AmmoBox extends ActiveItem {
                 }
 
                 weapon.forceReload();
-                weaponsReloaded++;
             }
-        }
-
-        if (weaponsReloaded > 0) {
-            System.out.println("Used Ammo Box! Reloaded " + weaponsReloaded + " weapon(s)");
-        } else {
-            System.out.println("Used Ammo Box! All weapons already loaded");
         }
     }
 
