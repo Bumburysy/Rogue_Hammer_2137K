@@ -10,13 +10,16 @@ import project.roguelike.core.GameConfig;
 import project.roguelike.core.GameStatistics;
 import project.roguelike.core.InputManager;
 import project.roguelike.core.InputState;
+import project.roguelike.core.SoundManager;
 import project.roguelike.items.Item;
 import project.roguelike.items.activeItems.ActiveItem;
 import project.roguelike.items.consumableItems.ConsumableItem;
 import project.roguelike.items.currencyItems.CurrencyItem;
 import project.roguelike.items.passiveItems.PassiveItem;
 import project.roguelike.items.weapons.Weapon;
+import project.roguelike.rooms.EndRoom;
 import project.roguelike.rooms.Room;
+import project.roguelike.rooms.ShopRoom;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -57,6 +60,7 @@ public class Player {
     private float bulletSpeedMultiplier = 1f;
     private float fireRateMultiplier = 1f;
     private float magazineSizeMultiplier = 1f;
+    private boolean levelTransitionRequested = false;
 
     private int keys = 0;
     private int coins = 0;
@@ -105,6 +109,8 @@ public class Player {
         updateBullets(delta, currentRoom);
         updateDamageFlash(delta);
         handleItemPickup(currentRoom, state);
+        handleChestOpen(currentRoom, state);
+        tryUseHatch(currentRoom, state);
     }
 
     public void render(SpriteBatch batch) {
@@ -136,14 +142,24 @@ public class Player {
             return;
         }
 
+        if (amount <= 0) {
+            return;
+        }
+
         currentHealth -= amount;
+        if (currentHealth < 0) {
+            currentHealth = 0;
+        }
+
         damageFlashTimer = DAMAGE_FLASH_DURATION;
+
+        SoundManager.playPlayerHit();
 
         if (statistics != null) {
             statistics.onDamageTaken(amount);
         }
 
-        if (currentHealth <= 0) {
+        if (currentHealth == 0) {
             die();
         }
     }
@@ -186,6 +202,7 @@ public class Player {
                 }
                 break;
         }
+        SoundManager.playItemPickup();
     }
 
     public void addPassiveItem(PassiveItem item) {
@@ -227,9 +244,14 @@ public class Player {
             return;
         }
 
+        int prevIndex = weaponIndex;
         weaponIndex = (weaponIndex + dir) % weapons.size();
         if (weaponIndex < 0) {
             weaponIndex += weapons.size();
+        }
+
+        if (weaponIndex != prevIndex) {
+            SoundManager.playItemChange();
         }
     }
 
@@ -295,7 +317,9 @@ public class Player {
         }
 
         if (state.isReloadPressed()) {
+            SoundManager.playReload();
             equipped.startReload();
+
         }
     }
 
@@ -308,6 +332,8 @@ public class Player {
         Vector2 shootDir = worldMouse.cpy().sub(muzzlePos).nor();
 
         weapon.shoot();
+
+        SoundManager.playShot();
 
         float finalDamage = weapon.getDamage() * damageMultiplier;
 
@@ -355,8 +381,47 @@ public class Player {
 
         Item nearby = currentRoom.getNearbyItem(this);
         if (nearby != null) {
+            if (currentRoom instanceof ShopRoom) {
+                ShopRoom shop = (ShopRoom) currentRoom;
+                int idx = shop.getShopItems().indexOf(nearby);
+                if (idx >= 0) {
+                    int price = shop.itemPrices.get(idx);
+                    if (getCoins() >= price) {
+                        spendCoins(price);
+                        SoundManager.playItemBuy();
+                        pickUpItem(nearby);
+                        shop.getShopItems().set(idx, null);
+                    }
+                    return;
+                }
+            }
             pickUpItem(nearby);
             currentRoom.removeItem(nearby);
+        }
+    }
+
+    private void handleChestOpen(Room currentRoom, InputState state) {
+        if (!state.isUsePressed()) {
+            return;
+        }
+        for (Chest chest : currentRoom.getChests()) {
+            if (!chest.isOpened() && !chest.isRemoved()
+                    && getBounds().overlaps(chest.getBounds())) {
+                chest.tryOpen(this, currentRoom.getItems());
+                if (chest.isOpened()) {
+                    SoundManager.playOpenChest();
+                }
+                break;
+            }
+        }
+    }
+
+    public void tryUseHatch(Room currentRoom, InputState state) {
+        if (currentRoom instanceof EndRoom) {
+            EndRoom endRoom = (EndRoom) currentRoom;
+            if (endRoom.isOnHatch() && state.isUsePressed()) {
+                requestLevelTransition();
+            }
         }
     }
 
@@ -383,6 +448,7 @@ public class Player {
     }
 
     private void die() {
+        SoundManager.playPlayerDeath();
         isDead = true;
         deathTriggered = true;
         deathTimer = 0;
@@ -552,9 +618,14 @@ public class Player {
             return;
         }
 
+        int prevIndex = activeIndex;
         activeIndex = (activeIndex + dir) % activeItems.size();
         if (activeIndex < 0) {
             activeIndex += activeItems.size();
+        }
+
+        if (activeIndex != prevIndex) {
+            SoundManager.playItemChange();
         }
     }
 
@@ -592,5 +663,17 @@ public class Player {
 
     public int getCoins() {
         return coins;
+    }
+
+    public boolean isLevelTransitionRequested() {
+        return levelTransitionRequested;
+    }
+
+    public void requestLevelTransition() {
+        this.levelTransitionRequested = true;
+    }
+
+    public void resetLevelTransitionRequest() {
+        this.levelTransitionRequested = false;
     }
 }
