@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.graphics.g2d.Animation;
+import project.roguelike.core.GameConfig;
 
 public class Trap {
     private static final int FRAME_WIDTH = 16;
@@ -19,14 +20,12 @@ public class Trap {
     }
 
     private final Vector2 position;
-    private final float size;
     private final int damage;
     private float cooldown = 0f;
     private float animationTime = 0f;
 
-    public Trap(Vector2 position, float size, int damage) {
+    public Trap(Vector2 position, int damage) {
         this.position = position;
-        this.size = size;
         this.damage = damage;
     }
 
@@ -36,7 +35,7 @@ public class Trap {
             cooldown -= delta;
             return;
         }
-        float half = size / 2f;
+        float half = GameConfig.TILE_SIZE / 2f;
         Vector2 playerPos = player.getPosition();
         if (playerPos.x >= position.x - half && playerPos.x <= position.x + half &&
                 playerPos.y >= position.y - half && playerPos.y <= position.y + half) {
@@ -47,6 +46,7 @@ public class Trap {
 
     public void render(SpriteBatch batch) {
         TextureRegion frame = ANIMATION.getKeyFrame(animationTime, true);
+        float size = GameConfig.TILE_SIZE;
         batch.draw(frame, position.x - size / 2f, position.y - size / 2f, size, size);
     }
 }
