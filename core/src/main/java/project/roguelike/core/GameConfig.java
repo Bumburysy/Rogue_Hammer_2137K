@@ -8,8 +8,8 @@ public class GameConfig {
 
     public static final float WALL_THICKNESS = 64f;
     public static final float TOP_MARGIN = 128f;
-    public static final float ROOM_WIDTH = 1280f;
-    public static final float ROOM_HEIGHT = ROOM_WIDTH / 2f;
+    public static final float ROOM_WIDTH = 1344f;
+    public static final float ROOM_HEIGHT = (ROOM_WIDTH + 64f) / 2f;
     public static final float ROOM_TOTAL_WIDTH = ROOM_WIDTH + WALL_THICKNESS;
     public static final float ROOM_TOTAL_HEIGHT = ROOM_HEIGHT + WALL_THICKNESS * 2;
     public static final float ROOM_SPACING = WALL_THICKNESS * 2f;
