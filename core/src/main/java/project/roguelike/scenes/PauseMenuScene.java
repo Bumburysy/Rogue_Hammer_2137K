@@ -13,6 +13,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import project.roguelike.core.GameConfig;
 import project.roguelike.core.SceneManager;
+import project.roguelike.core.SoundManager;
 
 public class PauseMenuScene implements Scene {
     private final SceneManager sceneManager;
@@ -162,10 +163,13 @@ public class PauseMenuScene implements Scene {
 
     private void handleMouseClick() {
         if (resumeHovered) {
+            SoundManager.playButtonClick();
             resumeGame();
         } else if (optionsHovered) {
+            SoundManager.playButtonClick();
             openOptions();
         } else if (quitHovered) {
+            SoundManager.playButtonClick();
             quitToMenu();
         }
     }
