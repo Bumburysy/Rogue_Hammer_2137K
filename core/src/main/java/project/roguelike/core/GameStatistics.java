@@ -9,6 +9,9 @@ public class GameStatistics {
     private int bulletsHit = 0;
     private float gameTime = 0f;
 
+    private int currentLevel = 0;
+    private int levelsCompleted = 0;
+
     public void update(float delta) {
         gameTime += delta;
     }
@@ -53,6 +56,8 @@ public class GameStatistics {
         bulletsFired = 0;
         bulletsHit = 0;
         gameTime = 0f;
+        currentLevel = 0;
+        levelsCompleted = 0;
     }
 
     public int getEnemiesKilled() {
@@ -81,5 +86,25 @@ public class GameStatistics {
 
     public float getGameTime() {
         return gameTime;
+    }
+
+    public int getCurrentLevel() {
+        return currentLevel;
+    }
+
+    public void setCurrentLevel(int level) {
+        this.currentLevel = Math.max(0, level);
+    }
+
+    public void incrementCurrentLevel() {
+        this.currentLevel = Math.max(0, this.currentLevel) + 1;
+    }
+
+    public int getLevelsCompleted() {
+        return levelsCompleted;
+    }
+
+    public void incrementLevelsCompleted() {
+        this.levelsCompleted++;
     }
 }
