@@ -8,8 +8,6 @@ import project.roguelike.core.RoomContentGenerator;
 import project.roguelike.core.RoomContentPlan;
 
 public class StartRoom extends Room {
-    private static final float SPAWN_Y_OFFSET = GameConfig.TILE_SIZE;
-
     private final Texture ladderTexture;
     private final Vector2 ladderPosition;
     private final float ladderWidth;
@@ -53,7 +51,7 @@ public class StartRoom extends Room {
         Vector2 pos = getPosition();
         return new Vector2(
                 pos.x + GameConfig.ROOM_WIDTH / 2f,
-                pos.y + GameConfig.ROOM_HEIGHT / 2f - SPAWN_Y_OFFSET);
+                pos.y + GameConfig.ROOM_HEIGHT / 2f);
     }
 
     private float calculateLadderWidth() {
@@ -78,25 +76,8 @@ public class StartRoom extends Room {
 
     private RoomContentPlan createStartingItems() {
         RoomContentPlan plan = new RoomContentPlan();
-        Vector2 pistolPos = new Vector2(11f, 3f);
+        Vector2 pistolPos = new Vector2(10f, 4f);
         plan.items.add(new RoomContentPlan.ItemSpawn("pistol", pistolPos));
-        plan.items.add(new RoomContentPlan.ItemSpawn("smg", null));
-        plan.items.add(new RoomContentPlan.ItemSpawn("rifle", null));
-        plan.items.add(new RoomContentPlan.ItemSpawn("shotgun", null));
-        plan.items.add(new RoomContentPlan.ItemSpawn("sniper", null));
-        plan.items.add(new RoomContentPlan.ItemSpawn("medkit", null));
-        plan.items.add(new RoomContentPlan.ItemSpawn("ammo_box", null));
-        plan.items.add(new RoomContentPlan.ItemSpawn("small_health_potion", null));
-        plan.items.add(new RoomContentPlan.ItemSpawn("large_health_potion", null));
-        plan.items.add(new RoomContentPlan.ItemSpawn("speed_boost", null));
-        plan.items.add(new RoomContentPlan.ItemSpawn("max_hp_boost", null));
-        plan.items.add(new RoomContentPlan.ItemSpawn("damage_boost", null));
-        plan.items.add(new RoomContentPlan.ItemSpawn("bullet_speed_boost", null));
-        plan.items.add(new RoomContentPlan.ItemSpawn("fire_rate_boost", null));
-        plan.items.add(new RoomContentPlan.ItemSpawn("magazine_size_boost", null));
-        plan.items.add(new RoomContentPlan.ItemSpawn("reload_speed_boost", null));
-        plan.items.add(new RoomContentPlan.ItemSpawn("coin", null));
-        plan.items.add(new RoomContentPlan.ItemSpawn("key", null));
         return plan;
     }
 }
