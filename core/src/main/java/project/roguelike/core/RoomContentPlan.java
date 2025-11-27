@@ -11,6 +11,7 @@ public class RoomContentPlan {
     public List<EnemySpawn> enemies = new ArrayList<>();
     public List<ItemSpawn> items = new ArrayList<>();
     public List<TrapSpawn> traps = new ArrayList<>();
+    public List<ChestSpawn> chests = new ArrayList<>();
 
     public static class EnemySpawn {
         public String type;
@@ -34,8 +35,18 @@ public class RoomContentPlan {
 
     public static class TrapSpawn {
         public Vector2 position;
+        public int damage;
 
-        public TrapSpawn(Vector2 position) {
+        public TrapSpawn(Vector2 position, int damage) {
+            this.position = position;
+            this.damage = damage;
+        }
+    }
+
+    public static class ChestSpawn {
+        public Vector2 position;
+
+        public ChestSpawn(Vector2 position) {
             this.position = position;
         }
     }
