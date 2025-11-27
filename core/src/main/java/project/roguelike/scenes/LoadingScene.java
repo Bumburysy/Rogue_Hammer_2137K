@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import project.roguelike.core.GameConfig;
@@ -16,7 +17,7 @@ public class LoadingScene implements Scene {
     private static final float SCENE_CREATION_THRESHOLD = 0.7f;
     private static final float DEFAULT_MIN_DISPLAY_TIME = 0.5f;
 
-    private static final Color BACKGROUND_COLOR = new Color(0.1f, 0.1f, 0.3f, 1f);
+    private static final Color BACKGROUND_COLOR = new Color(0.25f, 0.25f, 0.25f, 1f);
     private static final Color BAR_BG_COLOR = new Color(0.3f, 0.3f, 0.3f, 1f);
     private static final Color BAR_FILL_COLOR = new Color(0.2f, 0.7f, 0.2f, 1f);
 
@@ -43,6 +44,7 @@ public class LoadingScene implements Scene {
     private boolean fadeIn = true;
     private boolean fadeOut;
     private boolean targetSceneCreated;
+    private ShapeRenderer shapeRenderer;
 
     public LoadingScene(SceneManager sceneManager, SceneType targetSceneType, float minDisplayTime) {
         this.sceneManager = sceneManager;
@@ -63,6 +65,8 @@ public class LoadingScene implements Scene {
         logoTexture = loadLogoTexture();
         progressBarBgTexture = createSolidTexture(BAR_BG_COLOR);
         progressBarFillTexture = createSolidTexture(BAR_FILL_COLOR);
+
+        shapeRenderer = new ShapeRenderer();
 
         initializeFont();
     }
@@ -104,6 +108,8 @@ public class LoadingScene implements Scene {
         progressBarBgTexture.dispose();
         progressBarFillTexture.dispose();
         font.dispose();
+        if (shapeRenderer != null)
+            shapeRenderer.dispose();
     }
 
     private Texture createSolidTexture(Color color) {
@@ -247,13 +253,24 @@ public class LoadingScene implements Scene {
         float barX = centerX - GameConfig.UI_PROGRESS_BAR_WIDTH / 2f;
         float barY = centerY - GameConfig.UI_ELEMENT_SPACING;
 
-        batch.setColor(1f, 1f, 1f, fadeAlpha);
+        batch.setColor(0.18f, 0.18f, 0.28f, fadeAlpha);
         batch.draw(progressBarBgTexture, barX, barY, GameConfig.UI_PROGRESS_BAR_WIDTH,
                 GameConfig.UI_PROGRESS_BAR_HEIGHT);
 
+        batch.setColor(0.3f, 0.85f, 0.4f, fadeAlpha);
         float fillWidth = GameConfig.UI_PROGRESS_BAR_WIDTH * progress;
         batch.draw(progressBarFillTexture, barX, barY, fillWidth, GameConfig.UI_PROGRESS_BAR_HEIGHT);
+
         batch.setColor(1f, 1f, 1f, 1f);
+        batch.end();
+
+        shapeRenderer.setProjectionMatrix(viewport.getCamera().combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(1f, 1f, 1f, fadeAlpha);
+        shapeRenderer.rect(barX, barY, GameConfig.UI_PROGRESS_BAR_WIDTH, GameConfig.UI_PROGRESS_BAR_HEIGHT);
+        shapeRenderer.end();
+
+        batch.begin();
     }
 
     private void renderLoadingText(SpriteBatch batch) {
