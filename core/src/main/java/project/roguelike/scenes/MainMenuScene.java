@@ -2,6 +2,7 @@ package project.roguelike.scenes;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -11,6 +12,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import project.roguelike.core.GameConfig;
 import project.roguelike.core.SceneManager;
+import project.roguelike.core.SoundManager;
 
 public class MainMenuScene implements Scene {
     private static final int OPTION_COUNT = 3;
@@ -27,6 +29,7 @@ public class MainMenuScene implements Scene {
     private Texture playTexture;
     private Texture optionsTexture;
     private Texture quitTexture;
+    private Music musicMenu;
 
     private int hoveredIndex = -1;
 
@@ -41,6 +44,8 @@ public class MainMenuScene implements Scene {
 
         loadTextures();
         initializeBounds();
+
+        SoundManager.playMusic(SoundManager.musicMenu, true);
     }
 
     @Override
@@ -72,6 +77,7 @@ public class MainMenuScene implements Scene {
         playTexture.dispose();
         optionsTexture.dispose();
         quitTexture.dispose();
+        musicMenu.stop();
     }
 
     private void loadTextures() {
@@ -109,6 +115,7 @@ public class MainMenuScene implements Scene {
     }
 
     private void handleOptionSelection(int index) {
+        project.roguelike.core.SoundManager.playButtonClick();
         switch (index) {
             case PLAY_INDEX:
                 startGame();
