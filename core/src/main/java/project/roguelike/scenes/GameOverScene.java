@@ -13,11 +13,13 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import project.roguelike.core.GameConfig;
+import project.roguelike.core.GameStatistics;
 import project.roguelike.core.SceneManager;
+import project.roguelike.core.SoundManager;
 
 public class GameOverScene implements Scene {
     private final SceneManager sceneManager;
-    private GameStats stats;
+    private GameStatistics stats;
 
     private Viewport viewport;
     private Texture overlayTexture;
@@ -46,9 +48,8 @@ public class GameOverScene implements Scene {
         }
 
         public static VerticalLayout fromTop(float spacing) {
-            float startY = GameConfig.WORLD_HEIGHT - GameConfig.UI_TITLE_MARGIN_TOP
-                    - GameConfig.UI_TITLE_HEIGHT
-                    - GameConfig.UI_TITLE_MARGIN_BOTTOM;
+            float startY = GameConfig.WORLD_HEIGHT - GameConfig.UI_TITLE_MARGIN_TOP - GameConfig.UI_TITLE_HEIGHT
+                    - (GameConfig.UI_TITLE_MARGIN_BOTTOM / 2f);
             return new VerticalLayout(startY, spacing);
         }
 
@@ -67,25 +68,9 @@ public class GameOverScene implements Scene {
 
     }
 
-    public static class GameStats {
-        public final int enemiesKilled;
-        public final int roomsCleared;
-        public final int damageDealt;
-        public final int damageTaken;
-        public final float survivalTime;
-
-        public GameStats(int enemiesKilled, int roomsCleared, int damageDealt, int damageTaken, float survivalTime) {
-            this.enemiesKilled = enemiesKilled;
-            this.roomsCleared = roomsCleared;
-            this.damageDealt = damageDealt;
-            this.damageTaken = damageTaken;
-            this.survivalTime = survivalTime;
-        }
-    }
-
-    public GameOverScene(SceneManager sceneManager, GameStats stats) {
+    public GameOverScene(SceneManager sceneManager, GameStatistics stats) {
         this.sceneManager = sceneManager;
-        this.stats = stats != null ? stats : new GameStats(0, 0, 0, 0, 0f);
+        this.stats = stats != null ? stats : new GameStatistics();
     }
 
     @Override
@@ -97,6 +82,8 @@ public class GameOverScene implements Scene {
         loadTextures();
         initializeFont();
         calculateButtonBounds();
+
+        SoundManager.playMusic(SoundManager.musicLoose, true);
     }
 
     @Override
@@ -163,7 +150,7 @@ public class GameOverScene implements Scene {
     private void calculateButtonBounds() {
         float centerX = GameConfig.WORLD_WIDTH / 2f;
         VerticalLayout layout = VerticalLayout.fromTop(GameConfig.UI_ELEMENT_SPACING_COMPACT);
-        layout.advance(6);
+        layout.advance(9);
         layout.advance();
         playAgainBounds = createCenteredButtonBounds(playAgainTexture, centerX, layout.getCurrentY());
         layout.advance();
@@ -198,20 +185,25 @@ public class GameOverScene implements Scene {
     private void handleInput() {
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             if (playAgainHovered) {
+                SoundManager.playButtonClick();
+                SoundManager.playMusic(SoundManager.musicMenu, true);
                 restartGame();
                 return;
             }
             if (quitHovered) {
+                SoundManager.playButtonClick();
                 returnToMenu();
                 return;
             }
         }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+            SoundManager.playButtonClick();
             restartGame();
         }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            SoundManager.playButtonClick();
             returnToMenu();
         }
     }
@@ -252,20 +244,27 @@ public class GameOverScene implements Scene {
         font.getData().setScale(GameConfig.UI_TEXT_SCALE_SMALL);
         font.setColor(Color.WHITE);
 
-        drawCenteredText(batch, "Enemies Killed: " + stats.enemiesKilled, centerX, layout.getCurrentY());
+        drawCenteredText(batch, "Level: " + stats.getCurrentLevel(), centerX, layout.getCurrentY());
         layout.advance();
 
-        drawCenteredText(batch, "Rooms Cleared: " + stats.roomsCleared, centerX, layout.getCurrentY());
+        drawCenteredText(batch, "Completed Levels: " + stats.getLevelsCompleted(), centerX, layout.getCurrentY());
         layout.advance();
 
-        drawCenteredText(batch, "Damage Dealt: " + stats.damageDealt, centerX, layout.getCurrentY());
+        drawCenteredText(batch, "Enemies Killed: " + stats.getEnemiesKilled(), centerX, layout.getCurrentY());
         layout.advance();
 
-        drawCenteredText(batch, "Damage Taken: " + stats.damageTaken, centerX, layout.getCurrentY());
+        drawCenteredText(batch, "Rooms Cleared: " + stats.getRoomsCleared(), centerX, layout.getCurrentY());
         layout.advance();
 
-        drawCenteredText(batch, formatSurvivalTime(), centerX, layout.getCurrentY());
+        drawCenteredText(batch, "Damage Dealt: " + stats.getDamageDealt(), centerX, layout.getCurrentY());
+        layout.advance();
 
+        drawCenteredText(batch, "Damage Taken: " + stats.getDamageTaken(), centerX, layout.getCurrentY());
+        layout.advance();
+
+        drawCenteredText(batch, formatGameTime(stats.getGameTime()), centerX, layout.getCurrentY());
+        layout.advance();
+        drawCenteredText(batch, String.format("Accuracy: %.1f%%", stats.getAccuracy()), centerX, layout.getCurrentY());
         font.getData().setScale(GameConfig.UI_TEXT_SCALE_SMALL);
         font.setColor(Color.WHITE);
     }
@@ -293,16 +292,16 @@ public class GameOverScene implements Scene {
         font.draw(batch, text, centerX - glyphLayout.width / 2f, y);
     }
 
-    private String formatSurvivalTime() {
-        int totalSeconds = (int) stats.survivalTime;
-        int minutes = totalSeconds / 60;
-        int seconds = totalSeconds % 60;
-        return String.format("Survival Time: %d:%02d", minutes, seconds);
+    private String formatGameTime(float totalSeconds) {
+        int totalSecondsInt = (int) totalSeconds;
+        int minutes = totalSecondsInt / 60;
+        int seconds = totalSecondsInt % 60;
+        return String.format("Time: %d:%02d", minutes, seconds);
     }
 
     private void ensureStatsValid() {
         if (stats == null) {
-            stats = new GameStats(0, 0, 0, 0, 0f);
+            stats = new GameStatistics();
         }
     }
 }
