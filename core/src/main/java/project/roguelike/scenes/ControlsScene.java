@@ -12,6 +12,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import project.roguelike.core.GameConfig;
 import project.roguelike.core.SceneManager;
+import project.roguelike.core.SoundManager;
 import project.roguelike.core.InputAction;
 import project.roguelike.core.KeyBindings;
 
@@ -198,6 +199,13 @@ public class ControlsScene implements Scene {
         if (!Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             return;
         }
+
+        boolean clickedControl = backHovered || resetHovered || hoveredIndex != -1;
+        
+        if (!clickedControl) {
+            return;
+        }
+        SoundManager.playButtonClick();
 
         if (backHovered) {
             sceneManager.popScene();
