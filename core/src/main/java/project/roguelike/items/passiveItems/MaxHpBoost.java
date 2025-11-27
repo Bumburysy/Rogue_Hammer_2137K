@@ -1,6 +1,7 @@
 package project.roguelike.items.passiveItems;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.Vector2;
 
 public class MaxHpBoost extends PassiveItem {
     private static final int HP_BONUS = 2;
@@ -21,5 +22,10 @@ public class MaxHpBoost extends PassiveItem {
 
         Texture spriteSheet = new Texture("textures/hp_boost.png");
         initializeAnimation(spriteSheet);
+    }
+
+    public MaxHpBoost(Vector2 position) {
+        this();
+        setPosition(position);
     }
 }

@@ -1,6 +1,7 @@
 package project.roguelike.items.activeItems;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.Vector2;
 import project.roguelike.core.GameConfig;
 import project.roguelike.entities.Player;
 
@@ -12,6 +13,11 @@ public class MedKit extends ActiveItem {
         super("medkit", "Med Kit", COOLDOWN);
         this.texture = new Texture("textures/medkit.png");
         setTexture(texture, GameConfig.TILE_SIZE / 2f);
+    }
+
+    public MedKit(Vector2 position) {
+        this();
+        setPosition(position);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package project.roguelike.items.passiveItems;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.Vector2;
 
 public class BulletSpeedBoost extends PassiveItem {
     private static final float BULLET_SPEED_MULTIPLIER = 1.2f;
@@ -21,5 +22,10 @@ public class BulletSpeedBoost extends PassiveItem {
 
         Texture spriteSheet = new Texture("textures/bullet_speed_boost.png");
         initializeAnimation(spriteSheet);
+    }
+
+    public BulletSpeedBoost(Vector2 position) {
+        this();
+        setPosition(position);
     }
 }

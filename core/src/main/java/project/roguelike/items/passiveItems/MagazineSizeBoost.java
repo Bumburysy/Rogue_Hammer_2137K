@@ -1,6 +1,7 @@
 package project.roguelike.items.passiveItems;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.Vector2;
 
 public class MagazineSizeBoost extends PassiveItem {
     private static final float MAGAZINE_MULTIPLIER = 1.2f;
@@ -21,5 +22,10 @@ public class MagazineSizeBoost extends PassiveItem {
 
         Texture spriteSheet = new Texture("textures/magazine_boost.png");
         initializeAnimation(spriteSheet);
+    }
+
+    public MagazineSizeBoost(Vector2 position) {
+        this();
+        setPosition(position);
     }
 }

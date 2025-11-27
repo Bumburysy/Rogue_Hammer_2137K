@@ -1,6 +1,7 @@
 package project.roguelike.items.currencyItems;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.Vector2;
 import project.roguelike.entities.Player;
 
 public class Coin extends CurrencyItem {
@@ -12,6 +13,11 @@ public class Coin extends CurrencyItem {
         super(ITEM_ID, ITEM_NAME, COIN_VALUE);
         Texture spriteSheet = new Texture("textures/coin.png");
         initializeAnimation(spriteSheet);
+    }
+
+    public Coin(Vector2 position, int value) {
+        this();
+        setPosition(position);
     }
 
     @Override

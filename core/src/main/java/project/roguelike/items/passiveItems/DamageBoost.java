@@ -1,6 +1,7 @@
 package project.roguelike.items.passiveItems;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.Vector2;
 
 public class DamageBoost extends PassiveItem {
     private static final float DAMAGE_MULTIPLIER = 1.2f;
@@ -21,5 +22,10 @@ public class DamageBoost extends PassiveItem {
 
         Texture spriteSheet = new Texture("textures/damage_boost.png");
         initializeAnimation(spriteSheet);
+    }
+
+    public DamageBoost(Vector2 position) {
+        this();
+        setPosition(position);
     }
 }

@@ -1,6 +1,7 @@
 package project.roguelike.items.passiveItems;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.Vector2;
 
 public class FireRateBoost extends PassiveItem {
     private static final float FIRE_RATE_MULTIPLIER = 0.8f;
@@ -21,5 +22,10 @@ public class FireRateBoost extends PassiveItem {
 
         Texture spriteSheet = new Texture("textures/fire_rate_boost.png");
         initializeAnimation(spriteSheet);
+    }
+
+    public FireRateBoost(Vector2 position) {
+        this();
+        setPosition(position);
     }
 }

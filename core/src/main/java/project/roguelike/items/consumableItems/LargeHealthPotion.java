@@ -1,6 +1,7 @@
 package project.roguelike.items.consumableItems;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.Vector2;
 import project.roguelike.entities.Player;
 
 public class LargeHealthPotion extends ConsumableItem {
@@ -13,6 +14,11 @@ public class LargeHealthPotion extends ConsumableItem {
         initializeAnimation(spriteSheet);
     }
 
+    public LargeHealthPotion(Vector2 position) {
+        this();
+        setPosition(position);
+    }
+
     @Override
     public void onConsume(Player player) {
         int currentHealth = player.getHealth();
@@ -20,9 +26,8 @@ public class LargeHealthPotion extends ConsumableItem {
 
         if (currentHealth < maxHealth) {
             player.heal(HEAL_AMOUNT);
-            System.out.println("Consumed Large Health Potion! Healed " + HEAL_AMOUNT + " HP");
-        } else {
-            System.out.println("HP already full!");
         }
     }
+
+    
 }

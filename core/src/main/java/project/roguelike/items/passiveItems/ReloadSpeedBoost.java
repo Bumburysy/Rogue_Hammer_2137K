@@ -1,6 +1,7 @@
 package project.roguelike.items.passiveItems;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.Vector2;
 
 public class ReloadSpeedBoost extends PassiveItem {
     private static final float RELOAD_SPEED_MULTIPLIER = 0.8f;
@@ -21,5 +22,10 @@ public class ReloadSpeedBoost extends PassiveItem {
 
         Texture spriteSheet = new Texture("textures/reload_boost.png");
         initializeAnimation(spriteSheet);
+    }
+
+    public ReloadSpeedBoost(Vector2 position) {
+        this();
+        setPosition(position);
     }
 }
