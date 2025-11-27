@@ -33,10 +33,16 @@ public class GameUI {
     private Texture bossRoomTexture;
     private Texture normalRoomTexture;
     private Texture trapRoomTexture;
+    private Texture chestRoomTexture;
+    private Texture shopRoomTexture;
+    private Texture endRoomTexture;
     private TextureRegion startRoomIcon;
     private TextureRegion bossRoomIcon;
     private TextureRegion normalRoomIcon;
     private TextureRegion trapRoomIcon;
+    private TextureRegion chestRoomIcon;
+    private TextureRegion shopRoomIcon;
+    private TextureRegion endRoomIcon;
 
     private static final float UI_HEIGHT = 128f;
     private static final Color UI_BORDER = new Color(0.5f, 0.5f, 0.5f, 1f);
@@ -102,11 +108,17 @@ public class GameUI {
         this.bossRoomTexture = new Texture("ui/minimap_boss.png");
         this.normalRoomTexture = new Texture("ui/minimap_normal.png");
         this.trapRoomTexture = new Texture("ui/minimap_trap.png");
+        this.chestRoomTexture = new Texture("ui/minimap_chest.png");
+        this.shopRoomTexture = new Texture("ui/minimap_shop.png");
+        this.endRoomTexture = new Texture("ui/minimap_end.png");
 
         this.startRoomIcon = new TextureRegion(startRoomTexture);
         this.bossRoomIcon = new TextureRegion(bossRoomTexture);
         this.normalRoomIcon = new TextureRegion(normalRoomTexture);
         this.trapRoomIcon = new TextureRegion(trapRoomTexture);
+        this.chestRoomIcon = new TextureRegion(chestRoomTexture);
+        this.shopRoomIcon = new TextureRegion(shopRoomTexture);
+        this.endRoomIcon = new TextureRegion(endRoomTexture);
     }
 
     public void render(Viewport viewport, Player player, RoomData[][] layout, int playerRoomRow, int playerRoomCol) {
@@ -434,7 +446,17 @@ public class GameUI {
                 float x = minimapX + col * (roomSize + MINIMAP_ROOM_SPACING);
                 float y = minimapY + (rows - 1 - row) * (roomSize + MINIMAP_ROOM_SPACING);
 
+                if (!(row == playerRoomRow && col == playerRoomCol)) {
+                    shapeRenderer.setColor(new Color(0.18f, 0.18f, 0.18f, 1f));
+                    shapeRenderer.rect(x, y, roomSize, roomSize);
+                }
+            }
+        }
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
                 if (row == playerRoomRow && col == playerRoomCol) {
+                    float x = minimapX + col * (roomSize + MINIMAP_ROOM_SPACING);
+                    float y = minimapY + (rows - 1 - row) * (roomSize + MINIMAP_ROOM_SPACING);
                     shapeRenderer.setColor(Color.valueOf("a020f0"));
                     shapeRenderer.rect(x, y, roomSize, roomSize);
                 }
@@ -472,6 +494,12 @@ public class GameUI {
                     icon = bossRoomIcon;
                 else if (room.type == RoomType.TRAP)
                     icon = trapRoomIcon;
+                else if (room.type == RoomType.CHEST)
+                    icon = chestRoomIcon;
+                else if (room.type == RoomType.SHOP)
+                    icon = shopRoomIcon;
+                else if (room.type == RoomType.END)
+                    icon = endRoomIcon;
                 else
                     icon = normalRoomIcon;
                 float iconSize = roomSize * MINIMAP_ICON_SIZE_RATIO;
@@ -496,5 +524,8 @@ public class GameUI {
         bossRoomTexture.dispose();
         normalRoomTexture.dispose();
         trapRoomTexture.dispose();
+        chestRoomTexture.dispose();
+        shopRoomTexture.dispose();
+        endRoomTexture.dispose();
     }
 }
