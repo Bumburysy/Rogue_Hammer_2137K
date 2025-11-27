@@ -5,8 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 import project.roguelike.core.GameConfig;
 import project.roguelike.rooms.BossRoom;
+import project.roguelike.rooms.ChestRoom;
+import project.roguelike.rooms.EndRoom;
 import project.roguelike.rooms.NormalRoom;
 import project.roguelike.rooms.Room;
+import project.roguelike.rooms.ShopRoom;
 import project.roguelike.rooms.StartRoom;
 import project.roguelike.rooms.TrapRoom;
 
@@ -67,6 +70,12 @@ public class LevelGenerator {
                 return new BossRoom(position, shape);
             case TRAP:
                 return new TrapRoom(position, shape);
+            case CHEST:
+                return new ChestRoom(position, shape);
+            case SHOP:
+                return new ShopRoom(position, shape);
+            case END:
+                return new EndRoom(position, shape);
             case NORMAL:
                 return new NormalRoom(position, shape);
             default:
