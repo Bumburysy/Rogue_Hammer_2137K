@@ -41,12 +41,21 @@ public class WorldManager {
 
     private float deathTransitionTimer = 0f;
     private boolean playerDeathTriggered = false;
+    private boolean bossMusicPlaying = false;
 
     public WorldManager(RoomData[][] layout, SceneManager sceneManager) {
         this.layout = layout;
         this.sceneManager = sceneManager;
         this.statistics = new GameStatistics();
         this.gameUI = new GameUI();
+    }
+
+    public WorldManager(RoomData[][] layout, SceneManager sceneManager, Player player) {
+        this.layout = layout;
+        this.sceneManager = sceneManager;
+        this.statistics = new GameStatistics();
+        this.gameUI = new GameUI();
+        this.player = player;
     }
 
     public void create() {
@@ -61,6 +70,22 @@ public class WorldManager {
         statistics.update(delta);
         inputManager.update();
         updateMousePosition();
+
+        if (currentRoom instanceof BossRoom) {
+            if (!bossMusicPlaying && currentRoom.hasAliveEnemies()) {
+                SoundManager.playMusic(SoundManager.musicBoss, true);
+                bossMusicPlaying = true;
+            }
+            if (bossMusicPlaying && !currentRoom.hasAliveEnemies()) {
+                SoundManager.playMusic(SoundManager.musicMenu, true);
+                bossMusicPlaying = false;
+            }
+        } else {
+            if (bossMusicPlaying) {
+                SoundManager.playMusic(SoundManager.musicMenu, true);
+                bossMusicPlaying = false;
+            }
+        }
 
         if (playerDeathTriggered) {
             handleDeathTransition(delta);
@@ -88,10 +113,13 @@ public class WorldManager {
 
         currentRoom.render(batch);
         player.render(batch);
-        renderCrosshair(batch);
+
         batch.end();
+
         gameUI.render(viewport, player, layout, currentRow, currentCol);
+
         batch.begin();
+        renderCrosshair(batch);
     }
 
     public void resize(int width, int height) {
@@ -165,9 +193,18 @@ public class WorldManager {
     }
 
     private void initializePlayer() {
-        Vector2 spawnPoint = getStartingSpawnPoint();
-        player = new Player(spawnPoint.x, spawnPoint.y, GameConfig.PLAYER_SIZE, GameConfig.PLAYER_SIZE);
-        player.setStatistics(statistics);
+        if (player == null) {
+            Vector2 spawnPoint = getStartingSpawnPoint();
+            player = new Player(spawnPoint.x, spawnPoint.y, GameConfig.PLAYER_SIZE, GameConfig.PLAYER_SIZE);
+            player.setStatistics(statistics);
+        } else {
+            Vector2 spawnPoint = getStartingSpawnPoint();
+            player.getPosition().set(spawnPoint);
+            player.getBounds().setPosition(
+                    spawnPoint.x - player.getBounds().width / 2f,
+                    spawnPoint.y - player.getBounds().height / 2f);
+            player.setStatistics(statistics);
+        }
         updateCameraToCurrentRoom(true);
     }
 
@@ -212,15 +249,7 @@ public class WorldManager {
 
     private void transitionToGameOver() {
         restoreSystemCursor();
-
-        GameOverScene.GameStats stats = new GameOverScene.GameStats(
-                statistics.getEnemiesKilled(),
-                statistics.getRoomsCleared(),
-                statistics.getDamageDealt(),
-                statistics.getDamageTaken(),
-                statistics.getGameTime());
-
-        sceneManager.setScene(new GameOverScene(sceneManager, stats));
+        sceneManager.setScene(new GameOverScene(sceneManager, statistics));
     }
 
     private void updateDoorInteraction() {
