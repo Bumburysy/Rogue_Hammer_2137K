@@ -40,7 +40,8 @@ public class Lwjgl3Launcher {
         configuration.setWindowedMode(1280, 720);
         //// You can change these files; they are in lwjgl3/src/main/resources/ .
         //// They can also be loaded from the root of assets/ .
-        configuration.setWindowIcon();
+        configuration.setWindowIcon(
+                "ui/icon.png");
 
         //// This should improve compatibility with Windows machines with buggy OpenGL
         //// drivers, Macs
