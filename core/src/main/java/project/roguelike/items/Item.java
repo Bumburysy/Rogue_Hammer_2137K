@@ -24,6 +24,11 @@ public abstract class Item {
         this.type = type;
     }
 
+    public Item(String id, String name, ItemType type, Vector2 position) {
+        this(id, name, type);
+        setPosition(position);
+    }
+
     public void setPosition(Vector2 position) {
         this.position = new Vector2(position);
     }
