@@ -1,8 +1,11 @@
 package project.roguelike.core;
 
 import project.roguelike.rooms.Room;
+import project.roguelike.rooms.Room.CellType;
+import project.roguelike.core.RoomContentPlan.TrapSpawn;
 import project.roguelike.entities.*;
 import project.roguelike.items.Item;
+import project.roguelike.items.ItemFactory;
 import project.roguelike.items.weapons.*;
 import project.roguelike.items.activeItems.*;
 import project.roguelike.items.consumableItems.LargeHealthPotion;
@@ -16,6 +19,7 @@ import project.roguelike.items.passiveItems.MagazineSizeBoost;
 import project.roguelike.items.passiveItems.MaxHpBoost;
 import project.roguelike.items.passiveItems.MovementSpeedBoost;
 import project.roguelike.items.passiveItems.ReloadSpeedBoost;
+import java.util.List;
 
 import com.badlogic.gdx.math.Vector2;
 import java.util.Random;
@@ -23,17 +27,18 @@ import java.util.Random;
 public class RoomContentGenerator {
     private static final Random random = new Random();
     private static final int MAX_SPAWN_ATTEMPTS = 1000;
-    private static final int DOOR_SAFETY_RADIUS = 2;
+    private static final int DOOR_SAFETY_RADIUS = 3;
 
     public static void generate(Room room, RoomContentPlan plan) {
         Room.CellType[][] grid = room.getGrid();
 
         spawnEnemies(room, grid, plan.enemies);
         spawnItems(room, grid, plan.items);
+        spawnChests(room, grid, plan.chests);
+        spawnTraps(room, grid, plan.traps);
     }
 
-    private static void spawnEnemies(Room room, Room.CellType[][] grid,
-            java.util.List<RoomContentPlan.EnemySpawn> enemies) {
+    private static void spawnEnemies(Room room, Room.CellType[][] grid, List<RoomContentPlan.EnemySpawn> enemies) {
         for (RoomContentPlan.EnemySpawn enemySpawn : enemies) {
             Vector2 position = enemySpawn.position != null
                     ? cellToWorldPosition(room, enemySpawn.position)
@@ -45,7 +50,7 @@ public class RoomContentGenerator {
         }
     }
 
-    private static void spawnItems(Room room, Room.CellType[][] grid, java.util.List<RoomContentPlan.ItemSpawn> items) {
+    private static void spawnItems(Room room, Room.CellType[][] grid, List<RoomContentPlan.ItemSpawn> items) {
         for (RoomContentPlan.ItemSpawn itemSpawn : items) {
             Vector2 position = itemSpawn.position != null
                     ? cellToWorldPosition(room, itemSpawn.position)
@@ -53,6 +58,30 @@ public class RoomContentGenerator {
 
             if (position != null) {
                 createItem(room, itemSpawn.id, position);
+            }
+        }
+    }
+
+    private static void spawnChests(Room room, Room.CellType[][] grid, List<RoomContentPlan.ChestSpawn> chests) {
+        for (RoomContentPlan.ChestSpawn chestSpawn : chests) {
+            Vector2 position = chestSpawn.position != null
+                    ? cellToWorldPosition(room, chestSpawn.position)
+                    : getRandomFreePosition(room, grid);
+
+            if (position != null) {
+                createChest(room, position);
+            }
+        }
+    }
+
+    private static void spawnTraps(Room room, CellType[][] grid, List<TrapSpawn> traps) {
+        for (TrapSpawn trapSpawn : traps) {
+            Vector2 position = trapSpawn.position != null
+                    ? cellToWorldPosition(room, trapSpawn.position)
+                    : getRandomFreePosition(room, grid);
+
+            if (position != null) {
+                createTrap(room, position, trapSpawn.damage);
             }
         }
     }
@@ -79,9 +108,16 @@ public class RoomContentGenerator {
     }
 
     private static void createItem(Room room, String type, Vector2 position) {
-        Item item = instantiateItem(type);
+        Item item;
+        if ("random".equalsIgnoreCase(type)) {
+            item = ItemFactory.createRandomItem(position);
+        } else {
+            item = instantiateItem(type);
+            if (item != null) {
+                item.setPosition(position);
+            }
+        }
         if (item != null) {
-            item.setPosition(position);
             room.getItems().add(item);
         }
     }
@@ -132,6 +168,16 @@ public class RoomContentGenerator {
             default:
                 return null;
         }
+    }
+
+    private static void createChest(Room room, Vector2 position) {
+        Chest chest = new Chest(position);
+        room.getChests().add(chest);
+    }
+
+    private static void createTrap(Room room, Vector2 position, int damage) {
+        Trap trap = new Trap(position, damage);
+        room.getTraps().add(trap);
     }
 
     private static Vector2 cellToWorldPosition(Room room, Vector2 cellPosition) {
