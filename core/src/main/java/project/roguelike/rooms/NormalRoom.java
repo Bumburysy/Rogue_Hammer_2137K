@@ -7,8 +7,8 @@ import java.util.Random;
 
 public class NormalRoom extends Room {
     private static final Random random = new Random();
-    private static final int MIN_ENEMIES = 0;
-    private static final int MAX_ENEMIES = 0;
+    private static final int MIN_ENEMIES = 2;
+    private static final int MAX_ENEMIES = 8;
 
     public NormalRoom(Vector2 position, RoomShape shape) {
         super(position, shape);
