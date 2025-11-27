@@ -3,8 +3,10 @@ package project.roguelike.scenes;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
@@ -31,13 +33,24 @@ public class OptionsScene implements Scene {
     private Texture rightArrowTexture;
     private BitmapFont font;
 
+    private Texture sliderTrack;
+    private Texture sliderHandle;
+
     private Rectangle backBounds;
     private Rectangle volumeLeft, volumeRight;
     private Rectangle resLeft, resRight;
     private Rectangle fullscreenToggle;
     private Rectangle controlsButton;
 
+    private Rectangle masterSliderBounds;
+    private Rectangle musicSliderBounds;
+    private Rectangle uiSliderBounds;
+    private Rectangle sfxSliderBounds;
+
     private float volumeLabelY;
+    private float musicLabelY;
+    private float uiLabelY;
+    private float sfxLabelY;
     private float resolutionLabelY;
     private float fullscreenLabelY;
     private float controlsButtonY;
@@ -50,6 +63,8 @@ public class OptionsScene implements Scene {
     private boolean resRightHovered;
     private boolean fullscreenHovered;
     private boolean controlsHovered;
+
+    private int draggingSlider = -1;
 
     public OptionsScene(SceneManager sceneManager) {
         this(sceneManager, false);
@@ -71,6 +86,13 @@ public class OptionsScene implements Scene {
         initializeBounds();
         findCurrentResolution();
 
+        Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        pm.setColor(Color.WHITE);
+        pm.fill();
+        sliderTrack = new Texture(pm);
+        sliderHandle = new Texture(pm);
+        pm.dispose();
+
         Gdx.graphics.setSystemCursor(com.badlogic.gdx.graphics.Cursor.SystemCursor.Arrow);
     }
 
@@ -88,10 +110,23 @@ public class OptionsScene implements Scene {
 
         batch.begin();
         renderTitle(batch);
-        renderVolumeSection(batch);
+
+        renderLabel(batch, volumeLabelTexture, GameConfig.WORLD_WIDTH / 2f, volumeLabelY);
+        renderSlider(batch, masterSliderBounds, UserSettings.masterVolume);
+
+        renderLabelText(batch, "Music Volume", GameConfig.WORLD_WIDTH / 2f, musicLabelY);
+        renderSlider(batch, musicSliderBounds, UserSettings.musicVolume);
+
+        renderLabelText(batch, "UI Volume", GameConfig.WORLD_WIDTH / 2f, uiLabelY);
+        renderSlider(batch, uiSliderBounds, UserSettings.uiVolume);
+
+        renderLabelText(batch, "SFX Volume", GameConfig.WORLD_WIDTH / 2f, sfxLabelY);
+        renderSlider(batch, sfxSliderBounds, UserSettings.sfxVolume);
+
         renderResolutionSection(batch);
         renderFullscreenSection(batch);
         renderControlsButton(batch);
+
         renderBackButton(batch);
         batch.end();
     }
@@ -112,6 +147,8 @@ public class OptionsScene implements Scene {
         leftArrowTexture.dispose();
         rightArrowTexture.dispose();
         font.dispose();
+        sliderTrack.dispose();
+        sliderHandle.dispose();
     }
 
     private void loadTextures() {
@@ -131,25 +168,77 @@ public class OptionsScene implements Scene {
         font.getData().setScale(GameConfig.UI_TEXT_SCALE);
     }
 
+    private static class VerticalLayout {
+        private float y;
+        private final float spacing;
+
+        private VerticalLayout(float startY, float spacing) {
+            this.y = startY;
+            this.spacing = spacing;
+        }
+
+        public static VerticalLayout fromTop(float spacing) {
+            float startY = GameConfig.WORLD_HEIGHT - GameConfig.UI_TITLE_MARGIN_TOP - GameConfig.UI_TITLE_HEIGHT
+                    - (GameConfig.UI_TITLE_MARGIN_BOTTOM / 2f);
+            return new VerticalLayout(startY, spacing);
+        }
+
+        public float getCurrentY() {
+            return y;
+        }
+
+        public float advance() {
+            return advance(1);
+        }
+
+        public float advance(int steps) {
+            y -= spacing * steps;
+            return y;
+        }
+    }
+
     private void calculateLayout() {
-        float y = GameConfig.WORLD_HEIGHT - GameConfig.UI_TITLE_MARGIN_TOP;
-        y -= GameConfig.UI_TITLE_HEIGHT;
-        y -= GameConfig.UI_TITLE_MARGIN_BOTTOM;
+        VerticalLayout layout = VerticalLayout.fromTop(GameConfig.UI_ELEMENT_SPACING / 2f);
 
-        volumeLabelY = y;
-        y -= GameConfig.UI_ELEMENT_SPACING;
+        volumeLabelY = layout.getCurrentY();
+        layout.advance();
 
-        resolutionLabelY = y;
-        y -= GameConfig.UI_ELEMENT_SPACING;
+        musicLabelY = layout.getCurrentY();
+        layout.advance();
 
-        fullscreenLabelY = y;
-        y -= GameConfig.UI_ELEMENT_SPACING;
+        uiLabelY = layout.getCurrentY();
+        layout.advance();
 
-        controlsButtonY = y;
+        sfxLabelY = layout.getCurrentY();
+        layout.advance();
+
+        layout.advance();
+
+        resolutionLabelY = layout.getCurrentY();
+        layout.advance(2);
+
+        fullscreenLabelY = layout.getCurrentY();
+        layout.advance(2);
+
+        controlsButtonY = layout.getCurrentY();
+        layout.advance(2);
     }
 
     private void initializeBounds() {
         float centerX = GameConfig.WORLD_WIDTH / 2f;
+
+        float trackWidth = 400f;
+        float trackHeight = 8f;
+
+        float masterSliderY = volumeLabelY - GameConfig.UI_VALUE_Y_OFFSET - 10f;
+        float musicSliderY = musicLabelY - GameConfig.UI_VALUE_Y_OFFSET - 10f;
+        float uiSliderY = uiLabelY - GameConfig.UI_VALUE_Y_OFFSET - 10f;
+        float sfxSliderY = sfxLabelY - GameConfig.UI_VALUE_Y_OFFSET - 10f;
+
+        masterSliderBounds = new Rectangle(centerX - trackWidth / 2f, masterSliderY, trackWidth, trackHeight);
+        musicSliderBounds = new Rectangle(centerX - trackWidth / 2f, musicSliderY, trackWidth, trackHeight);
+        uiSliderBounds = new Rectangle(centerX - trackWidth / 2f, uiSliderY, trackWidth, trackHeight);
+        sfxSliderBounds = new Rectangle(centerX - trackWidth / 2f, sfxSliderY, trackWidth, trackHeight);
 
         float volumeValueY = volumeLabelY - GameConfig.UI_VALUE_Y_OFFSET;
         volumeLeft = createControlBounds(centerX - GameConfig.UI_MARGIN_SIDE, volumeValueY);
@@ -167,7 +256,6 @@ public class OptionsScene implements Scene {
                 40f);
 
         controlsButton = createButtonBounds(controlsLabelTexture, centerX, controlsButtonY);
-
         backBounds = createButtonBounds(backTexture, centerX, GameConfig.UI_MARGIN_BOTTOM);
     }
 
@@ -208,16 +296,79 @@ public class OptionsScene implements Scene {
     }
 
     private void handleInput() {
-        if (!Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+        boolean justPressed = Gdx.input.isButtonJustPressed(Input.Buttons.LEFT);
+        boolean pressed = Gdx.input.isButtonPressed(Input.Buttons.LEFT);
+
+        if (justPressed) {
+            if (masterSliderBounds.contains(mousePosition.x, mousePosition.y)) {
+                draggingSlider = 0;
+            } else if (musicSliderBounds.contains(mousePosition.x, mousePosition.y)) {
+                draggingSlider = 1;
+            } else if (uiSliderBounds.contains(mousePosition.x, mousePosition.y)) {
+                draggingSlider = 2;
+            } else if (sfxSliderBounds.contains(mousePosition.x, mousePosition.y)) {
+                draggingSlider = 3;
+            }
+        }
+
+        if (draggingSlider != -1 && pressed) {
+            Rectangle b = (draggingSlider == 0) ? masterSliderBounds
+                    : (draggingSlider == 1) ? musicSliderBounds
+                            : (draggingSlider == 2) ? uiSliderBounds
+                                    : sfxSliderBounds;
+
+            float t = (mousePosition.x - b.x) / b.width;
+            t = Math.max(0f, Math.min(1f, t));
+            switch (draggingSlider) {
+                case 0:
+                    UserSettings.setVolume(t);
+                    project.roguelike.core.SoundManager.applyVolumes();
+                    break;
+                case 1:
+                    UserSettings.setMusicVolume(t);
+                    project.roguelike.core.SoundManager.applyVolumes();
+                    break;
+                case 2:
+                    UserSettings.setUiVolume(t);
+                    project.roguelike.core.SoundManager.applyVolumes();
+                    break;
+                case 3:
+                    UserSettings.setSfxVolume(t);
+                    break;
+            }
             return;
         }
+
+        if (!pressed) {
+            draggingSlider = -1;
+        }
+
+        if (!justPressed || draggingSlider != -1) {
+            return;
+        }
+
+        boolean clickedControl = backHovered
+                || volumeLeftHovered
+                || volumeRightHovered
+                || resLeftHovered
+                || resRightHovered
+                || fullscreenHovered
+                || controlsHovered;
+
+        if (!clickedControl) {
+            return;
+        }
+
+        project.roguelike.core.SoundManager.playButtonClick();
 
         if (backHovered) {
             handleBackButton();
         } else if (volumeLeftHovered) {
-            adjustVolume(-GameConfig.UI_VOLUME_STEP);
+            UserSettings.setVolume(Math.max(0f, UserSettings.masterVolume - GameConfig.UI_VOLUME_STEP));
+            project.roguelike.core.SoundManager.applyVolumes();
         } else if (volumeRightHovered) {
-            adjustVolume(GameConfig.UI_VOLUME_STEP);
+            UserSettings.setVolume(Math.min(1f, UserSettings.masterVolume + GameConfig.UI_VOLUME_STEP));
+            project.roguelike.core.SoundManager.applyVolumes();
         } else if (resLeftHovered) {
             cycleResolution(-1);
         } else if (resRightHovered) {
@@ -237,11 +388,6 @@ public class OptionsScene implements Scene {
         }
     }
 
-    private void adjustVolume(int delta) {
-        int currentVol = Math.round(UserSettings.masterVolume * 100);
-        UserSettings.setVolume((currentVol + delta) / 100f);
-    }
-
     private void cycleResolution(int direction) {
         currentResIndex = (currentResIndex + direction + resolutions.length) % resolutions.length;
         applyResolution();
@@ -254,6 +400,31 @@ public class OptionsScene implements Scene {
         UserSettings.setResolution(width, height);
     }
 
+    private void renderLabelText(SpriteBatch batch, String text, float centerX, float y) {
+        font.getData().setScale(GameConfig.UI_TEXT_SCALE);
+        font.setColor(Color.WHITE);
+        GlyphLayout layout = new GlyphLayout(font, text);
+        font.draw(batch, text, centerX - layout.width / 2f, y);
+    }
+
+    private void renderSlider(SpriteBatch batch, Rectangle bounds, float value) {
+        batch.setColor(0.25f, 0.25f, 0.25f, 1f);
+        batch.draw(sliderTrack, bounds.x, bounds.y, bounds.width, bounds.height);
+        batch.setColor(0.9f, 0.9f, 0.9f, 1f);
+        batch.draw(sliderTrack, bounds.x, bounds.y, bounds.width * value, bounds.height);
+        float handleW = 14f;
+        float handleH = 18f;
+        float handleX = bounds.x + bounds.width * value - handleW / 2f;
+        float handleY = bounds.y + (bounds.height - handleH) / 2f;
+        batch.setColor(1f, 1f, 1f, 1f);
+        batch.draw(sliderHandle, handleX, handleY, handleW, handleH);
+
+        font.getData().setScale(GameConfig.UI_VALUE_TEXT_SCALE);
+        String pct = Math.round(value * 100) + "%";
+        font.draw(batch, pct, bounds.x + bounds.width + 8f, bounds.y + bounds.height);
+        font.getData().setScale(GameConfig.UI_TEXT_SCALE);
+    }
+
     private void renderTitle(SpriteBatch batch) {
         float centerX = GameConfig.WORLD_WIDTH / 2f;
         float aspect = (float) titleTexture.getWidth() / titleTexture.getHeight();
@@ -262,14 +433,6 @@ public class OptionsScene implements Scene {
         float y = GameConfig.WORLD_HEIGHT - GameConfig.UI_TITLE_HEIGHT - GameConfig.UI_TITLE_MARGIN_TOP;
 
         batch.draw(titleTexture, x, y, width, GameConfig.UI_TITLE_HEIGHT);
-    }
-
-    private void renderVolumeSection(SpriteBatch batch) {
-        float centerX = GameConfig.WORLD_WIDTH / 2f;
-
-        renderLabel(batch, volumeLabelTexture, centerX, volumeLabelY);
-        renderValueText(batch, (int) (UserSettings.masterVolume * 100) + "%", centerX, volumeLabelY);
-        renderArrowControls(batch, volumeLeft, volumeRight, volumeLeftHovered, volumeRightHovered);
     }
 
     private void renderResolutionSection(SpriteBatch batch) {
