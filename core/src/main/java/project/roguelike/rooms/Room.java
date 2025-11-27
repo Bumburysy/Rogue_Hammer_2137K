@@ -12,14 +12,16 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import project.roguelike.core.GameConfig;
 import project.roguelike.entities.Bullet;
+import project.roguelike.entities.Chest;
 import project.roguelike.entities.Enemy;
 import project.roguelike.entities.Player;
+import project.roguelike.entities.Trap;
 import project.roguelike.items.Item;
 import project.roguelike.core.GameStatistics;
 
 public abstract class Room {
     private static final int TEXTURE_BASE_SIZE = 16;
-    private static final float DOOR_INTERACTION_PADDING = GameConfig.TILE_SIZE * 0.3f;
+    private static final float DOOR_INTERACTION_PADDING = GameConfig.TILE_SIZE * 0.001f;
     private static final float DOOR_WIDTH_MULTIPLIER = 2f;
     private static final float DOOR_PULSE_DURATION = 2000f;
     private static final float DOOR_BASE_ALPHA = 0.5f;
@@ -46,6 +48,8 @@ public abstract class Room {
     private final CellType[][] grid;
     private final List<Enemy> enemies;
     private final List<Item> items;
+    private final List<Chest> chests;
+    private final List<Trap> traps;
 
     private final float wallThickness = GameConfig.WALL_THICKNESS;
     private final float roomWidth = GameConfig.ROOM_WIDTH;
@@ -109,6 +113,8 @@ public abstract class Room {
 
         this.enemies = new ArrayList<>();
         this.items = new ArrayList<>();
+        this.chests = new ArrayList<>();
+        this.traps = new ArrayList<>();
         this.grid = new CellType[innerGridWidth][innerGridHeight];
         initializeGrid();
 
@@ -129,6 +135,8 @@ public abstract class Room {
         renderEnemies(batch);
         renderItems(batch);
         renderBanners(batch);
+        renderChests(batch);
+        renderTraps(batch);
     }
 
     public void update(float delta, Player player) {
@@ -137,6 +145,33 @@ public abstract class Room {
         torchStateTime += delta;
         bannerStateTime += delta;
         checkRoomCleared();
+        updateChests(delta);
+        updateTraps(delta, player);
+    }
+
+    private void updateChests(float delta) {
+        for (Chest chest : chests) {
+            chest.update(delta);
+        }
+        chests.removeIf(Chest::isRemoved);
+    }
+
+    private void renderChests(SpriteBatch batch) {
+        for (Chest chest : chests) {
+            chest.render(batch);
+        }
+    }
+
+    public void addChest(Chest chest) {
+        chests.add(chest);
+    }
+
+    public List<Chest> getChests() {
+        return chests;
+    }
+
+    public void removeChest(Chest chest) {
+        chests.remove(chest);
     }
 
     private void updateItems(float delta) {
@@ -186,23 +221,23 @@ public abstract class Room {
             case UP:
                 return createDoorBounds(
                         position.x + roomWidth / 2f - doorWidth / 2f,
-                        position.y + roomHeight - wallThickness,
-                        doorWidth, wallThickness);
+                        position.y + roomHeight - wallThickness * DOOR_INTERACTION_PADDING,
+                        doorWidth, wallThickness * DOOR_INTERACTION_PADDING);
             case DOWN:
                 return createDoorBounds(
                         position.x + roomWidth / 2f - doorWidth / 2f,
-                        position.y - wallThickness / 2f,
-                        doorWidth, wallThickness);
+                        position.y,
+                        doorWidth, wallThickness * DOOR_INTERACTION_PADDING);
             case LEFT:
                 return createDoorBounds(
-                        position.x - wallThickness / 2f,
+                        position.x,
                         position.y + roomHeight / 2f - doorWidth / 2f,
-                        wallThickness, doorWidth);
+                        wallThickness * DOOR_INTERACTION_PADDING, doorWidth);
             case RIGHT:
                 return createDoorBounds(
-                        position.x + roomWidth - wallThickness / 2f,
+                        position.x + roomWidth - wallThickness * DOOR_INTERACTION_PADDING,
                         position.y + roomHeight / 2f - doorWidth / 2f,
-                        wallThickness, doorWidth);
+                        wallThickness * DOOR_INTERACTION_PADDING, doorWidth);
         }
         return null;
     }
@@ -612,5 +647,29 @@ public abstract class Room {
 
     public GameStatistics getStatistics() {
         return statistics;
+    }
+
+    public List<Trap> getTraps() {
+        return traps;
+    }
+
+    public void addTrap(Trap trap) {
+        traps.add(trap);
+    }
+
+    public void removeTrap(Trap trap) {
+        traps.remove(trap);
+    }
+
+    protected void updateTraps(float delta, Player player) {
+        for (Trap trap : traps) {
+            trap.update(delta, player);
+        }
+    }
+
+    protected void renderTraps(SpriteBatch batch) {
+        for (Trap trap : traps) {
+            trap.render(batch);
+        }
     }
 }
