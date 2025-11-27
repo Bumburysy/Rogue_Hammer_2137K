@@ -26,6 +26,7 @@ def os = System.properties['os.name'].toLowerCase()
 run {
     workingDir = rootProject.file('assets').path
     if (os.contains('mac')) jvmArgs += "-XstartOnFirstThread"
+    maxHeapSize = "512m"
 }
 
 jar {
