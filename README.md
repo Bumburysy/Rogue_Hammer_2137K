@@ -74,8 +74,7 @@
 - Wybór broni: **scroll**
 - Wybór przedmiotu: **1, 2**
 - Użycie przedmiotu: **Q**
-
-## Jak uruchomić (Windows)
+- Pauza: **ESC**
 
 ## Jak uruchomić (Windows)
 
