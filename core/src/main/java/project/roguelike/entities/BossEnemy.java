@@ -10,16 +10,18 @@ import project.roguelike.core.GameConfig;
 
 public class BossEnemy extends Enemy {
     private static final float VISUAL_SIZE_MULTIPLIER = 2.0f;
-    private static final float COLLISION_WIDTH_MULTIPLIER = 1.6f;
-    private static final float COLLISION_HEIGHT_MULTIPLIER = 1.6f;
-    private static final int BOSS_MAX_HEALTH = 20;
+    private static final float COLLISION_WIDTH_MULTIPLIER = 1.2f;
+    private static final float COLLISION_HEIGHT_MULTIPLIER = 1.2f;
+    private static final int BOSS_MAX_HEALTH = 32;
     private static final float BOSS_SPEED = 140f;
     private static final int BOSS_DAMAGE = 4;
-    private static final float ATTACK_COOLDOWN = 2.5f;
+    private static final float ATTACK_COOLDOWN = 2f;
     private static final float ANIMATION_FRAME_DURATION = 0.2f;
+    private static final int ANIMATION_FRAMES = 4;
 
     private Texture spriteSheet;
     private boolean facingRight = true;
+    private static final float ATTACK_SWING_DURATION = 0.7f;
 
     public BossEnemy(Vector2 spawnPos) {
         super(spawnPos);
@@ -29,10 +31,23 @@ public class BossEnemy extends Enemy {
 
     @Override
     protected void loadAnimations() {
-        spriteSheet = new Texture(Gdx.files.internal("textures/orc.png"));
-        TextureRegion region = new TextureRegion(spriteSheet);
-        idleAnimation = new Animation<>(ANIMATION_FRAME_DURATION, region);
-        attackAnimation = new Animation<>(ANIMATION_FRAME_DURATION, region);
+        spriteSheet = new Texture(Gdx.files.internal("textures/GoblinOccultist.png"));
+        int frameCount = ANIMATION_FRAMES;
+        int frameW = spriteSheet.getWidth() / frameCount;
+        int frameH = Math.max(1, spriteSheet.getHeight());
+        TextureRegion[][] tmp = TextureRegion.split(spriteSheet, frameW, frameH);
+        TextureRegion[] frames = new TextureRegion[frameCount];
+        for (int i = 0; i < frameCount; i++) {
+            frames[i] = tmp[0][i];
+        }
+        idleAnimation = new Animation<>(ANIMATION_FRAME_DURATION, frames);
+        idleAnimation.setPlayMode(Animation.PlayMode.LOOP);
+
+        attackAnimation = new Animation<>(ANIMATION_FRAME_DURATION, frames);
+        attackAnimation.setPlayMode(Animation.PlayMode.NORMAL);
+
+        dieAnimation = new Animation<>(ANIMATION_FRAME_DURATION, new TextureRegion[] { frames[0] });
+        dieAnimation.setPlayMode(Animation.PlayMode.NORMAL);
     }
 
     @Override
@@ -43,7 +58,7 @@ public class BossEnemy extends Enemy {
 
         attackTimer = 0f;
         currentState = State.ATTACK;
-
+        triggerAttackSwing(ATTACK_SWING_DURATION);
         if (position.dst(player.getPosition()) <= attackRange + getAttackRangeTolerance()) {
             player.takeDamage(damage);
         }
@@ -55,8 +70,13 @@ public class BossEnemy extends Enemy {
     }
 
     @Override
+    public void update(float delta, Player player) {
+        super.update(delta, player);
+    }
+
+    @Override
     public void render(SpriteBatch batch) {
-        TextureRegion frame = getCurrentFrame();
+        TextureRegion frame = (idleAnimation != null) ? idleAnimation.getKeyFrame(stateTime, true) : getCurrentFrame();
         if (frame == null) {
             return;
         }
@@ -67,13 +87,15 @@ public class BossEnemy extends Enemy {
             batch.setColor(1f, 0f, 0f, 1f);
         }
 
+        float rotation = getAttackRotation(facingRight, 45f);
+
         if (dying) {
             batch.draw(frame, drawPos.x, drawPos.y, width / 2f, height / 2f,
                     width, height, 1f, 1f, deathRotation);
         } else {
             float scaleX = facingRight ? 1f : -1f;
             batch.draw(frame, drawPos.x, drawPos.y, width / 2f, height / 2f,
-                    width, height, scaleX, 1f, 0f);
+                    width, height, scaleX, 1f, rotation);
         }
 
         batch.setColor(1f, 1f, 1f, 1f);
@@ -96,7 +118,7 @@ public class BossEnemy extends Enemy {
         this.speed = BOSS_SPEED;
         this.damage = BOSS_DAMAGE;
         this.agroRange = GameConfig.ROOM_WIDTH;
-        this.attackRange = GameConfig.TILE_SIZE * 2.5f;
+        this.attackRange = GameConfig.TILE_SIZE * 2f;
         this.attackCooldown = ATTACK_COOLDOWN;
         this.attackTimer = attackCooldown;
         this.type = Type.BOSS;
