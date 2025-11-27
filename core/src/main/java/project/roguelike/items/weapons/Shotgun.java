@@ -1,6 +1,7 @@
 package project.roguelike.items.weapons;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.Vector2;
 import project.roguelike.core.GameConfig;
 
 public class Shotgun extends Weapon {
@@ -16,5 +17,10 @@ public class Shotgun extends Weapon {
                 false);
         this.texture = new Texture("textures/shotgun.png");
         setTexture(texture, GameConfig.TILE_SIZE / 2F);
+    }
+
+    public Shotgun(Vector2 position) {
+        this();
+        setPosition(position);
     }
 }

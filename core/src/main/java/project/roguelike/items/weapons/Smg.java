@@ -1,6 +1,7 @@
 package project.roguelike.items.weapons;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.Vector2;
 import project.roguelike.core.GameConfig;
 
 public class Smg extends Weapon {
@@ -16,5 +17,10 @@ public class Smg extends Weapon {
                 true);
         this.texture = new Texture("textures/smg.png");
         setTexture(texture, GameConfig.TILE_SIZE / 2F);
+    }
+
+    public Smg(Vector2 position) {
+        this();
+        setPosition(position);
     }
 }
