@@ -6,7 +6,13 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import project.roguelike.core.GameConfig;
+import project.roguelike.core.SoundManager;
+import project.roguelike.items.Item;
+import project.roguelike.items.ItemFactory;
+import project.roguelike.items.currencyItems.Coin;
+import project.roguelike.items.currencyItems.Key;
 import project.roguelike.rooms.Room;
+import java.util.Random;
 
 public abstract class Enemy {
     private static final float DAMAGE_FLASH_DURATION = 0.2f;
@@ -47,6 +53,8 @@ public abstract class Enemy {
     protected float damageFlashTimer = 0f;
     protected float deathTimer = 0f;
     protected float deathRotation = 0f;
+    protected float attackSwingTime = 0f;
+    protected float attackSwingDuration = 0.6f;
 
     protected Room parentRoom;
     protected Type type;
@@ -56,7 +64,7 @@ public abstract class Enemy {
     }
 
     public enum State {
-        IDLE, WALK, ATTACK, DIE
+        IDLE, ATTACK, DIE
     }
 
     protected Enemy(Vector2 spawnPos) {
@@ -114,13 +122,34 @@ public abstract class Enemy {
         }
     }
 
+    protected void triggerAttackSwing(float duration) {
+        attackSwingTime = 0f;
+        attackSwingDuration = Math.max(0.01f, duration);
+    }
+
+    protected void updateAttackSwing(float delta) {
+        if (attackSwingTime < attackSwingDuration) {
+            attackSwingTime += delta;
+            if (attackSwingTime > attackSwingDuration)
+                attackSwingTime = attackSwingDuration;
+        }
+    }
+
+    protected float getAttackRotation(boolean facingRight, float maxAngleDegrees) {
+        if (attackSwingTime <= 0f || attackSwingDuration <= 0f)
+            return 0f;
+        float t = Math.min(1f, attackSwingTime / attackSwingDuration);
+        float phase = (float) (Math.sin(Math.PI * t) * (2f * t - 1f));
+        return phase * maxAngleDegrees * (facingRight ? -1f : 1f);
+    }
+
     protected void moveTowardsPlayer(Vector2 toPlayer) {
         if (Math.abs(toPlayer.x) > Math.abs(toPlayer.y)) {
             velocity.set(Math.signum(toPlayer.x) * speed, 0);
         } else {
             velocity.set(0, Math.signum(toPlayer.y) * speed);
         }
-        currentState = State.WALK;
+        currentState = State.IDLE;
         updateFacingDirection();
     }
 
@@ -208,6 +237,7 @@ public abstract class Enemy {
         }
 
         stateTime += delta;
+        updateAttackSwing(delta);
         updateAI(delta, player);
         updateBoundsPosition();
     }
@@ -241,16 +271,15 @@ public abstract class Enemy {
 
     protected TextureRegion getCurrentFrame() {
         switch (currentState) {
-            case WALK:
-                return walkAnimation != null
-                        ? walkAnimation.getKeyFrame(stateTime, true)
-                        : idleAnimation.getKeyFrame(0);
             case ATTACK:
                 return attackAnimation != null
                         ? attackAnimation.getKeyFrame(stateTime, false)
-                        : idleAnimation.getKeyFrame(0);
-            case IDLE:
+                        : (idleAnimation != null ? idleAnimation.getKeyFrame(stateTime, true) : null);
             case DIE:
+                return dieAnimation != null
+                        ? dieAnimation.getKeyFrame(stateTime, false)
+                        : (idleAnimation != null ? idleAnimation.getKeyFrame(stateTime, true) : null);
+            case IDLE:
             default:
                 return idleAnimation != null
                         ? idleAnimation.getKeyFrame(stateTime, true)
@@ -265,6 +294,7 @@ public abstract class Enemy {
 
         health -= amount;
         damageFlashTimer = DAMAGE_FLASH_DURATION;
+        SoundManager.playEnemyHit();
 
         if (parentRoom != null && parentRoom.getStatistics() != null) {
             parentRoom.getStatistics().onDamageDealt((int) amount);
@@ -284,6 +314,42 @@ public abstract class Enemy {
         currentState = State.DIE;
         stateTime = 0;
         deathTimer = 0;
+
+        if (parentRoom != null) {
+            Random rand = new Random();
+            Vector2 dropPos = new Vector2(position);
+
+            switch (type) {
+                case GOBLIN:
+                    parentRoom.getItems().add(new Coin(dropPos, 1));
+                    break;
+                case ORC:
+                    if (rand.nextFloat() < 0.8f) {
+                        parentRoom.getItems().add(new Coin(dropPos, 1));
+                        parentRoom.getItems().add(new Coin(dropPos, 1));
+                    } else {
+                        parentRoom.getItems().add(new Key(dropPos, 1));
+                    }
+                    break;
+                case BOSS:
+                    for (int i = 0; i < 5; i++) {
+                        parentRoom.getItems().add(new Coin(dropPos, 1));
+                    }
+                    parentRoom.getItems().add(new Key(dropPos, 1));
+                    if (rand.nextFloat() < 0.5f) {
+                        Item randomItem = ItemFactory.createRandomItem(dropPos);
+                        if (randomItem != null) {
+                            parentRoom.getItems().add(randomItem);
+                        }
+                    }
+                    if (rand.nextFloat() < 0.4f) {
+                        parentRoom.addChest(new project.roguelike.entities.Chest(dropPos.cpy()));
+                    }
+                    break;
+            }
+        }
+
+        SoundManager.playEnemyDeath();
 
         if (parentRoom != null && parentRoom.getStatistics() != null) {
             parentRoom.getStatistics().onEnemyKilled();
